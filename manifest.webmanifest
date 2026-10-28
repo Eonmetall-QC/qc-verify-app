@@ -1,7 +1,8 @@
 {
-  "name": "QC Verify Hub",
-  "short_name": "QC Verify",
-  "description": "Supervisor: check and sign QC in-process inspection forms.",
+  "id": "./?app=ipqc-verify",
+  "name": "IPQC Verify Hub",
+  "short_name": "IPQC Verify",
+  "description": "Supervisor: check and sign IPQC in-process inspection forms.",
   "start_url": "./QC_Verify_Hub.html",
   "scope": "./",
   "display": "standalone",
@@ -9,8 +10,8 @@
   "background_color": "#0E5C4A",
   "theme_color": "#0E5C4A",
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "ipqc-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "ipqc-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "ipqc-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
