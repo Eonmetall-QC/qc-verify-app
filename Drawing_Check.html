@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=794, minimum-scale=0.25, maximum-scale=6.0, user-scalable=yes">
+<title>QF-QC-002(B) — Drawing Check</title>
+<style>
+  :root{
+    --ink:#000; --paper:#e9e9e9; --pass:#1a7a2e; --fail:#c62828; --accent:#0b3d91;
+    --warn:#b7791f; --warn-bg:#fff4dc; --miss-bg:#fdecec;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{ background:var(--paper); font-family:"Times New Roman", Times, serif; color:var(--ink);
+    font-size:12.5px; -webkit-text-size-adjust:100%; padding-top:30px; }
+  .scroll-wrap{
+    padding:14px 0 100px;
+    display:flex;
+    justify-content:flex-start;   /* fallback: never clips the left edge */
+    justify-content:safe center;
+  }
+  .page{ width:210mm; min-width:210mm; background:#fff; box-shadow:0 0 10px rgba(0,0,0,0.25); position:relative; }
+  .content{ padding:7mm 6mm 7mm 6mm; }
+
+  .title-row{ display:flex; align-items:flex-end; justify-content:space-between; border-bottom:2px solid var(--ink); padding-bottom:4px; }
+  .title-row h1{ font-size:21px; margin:0; letter-spacing:0.01em; }
+  .title-row .sub{ font-size:11.5px; }
+  .hint{ font-family:Arial, sans-serif; font-size:11px; color:#555; margin:6px 0 0; }
+
+  h2{ font-size:13.5px; margin:14px 0 6px; }
+
+  /* photo */
+  .photo-actions{ display:flex; gap:8px; flex-wrap:wrap; font-family:Arial, sans-serif; }
+  .pbtn{ border:1px solid #666; background:#f4f4f4; border-radius:4px; padding:9px 14px; font-size:12.5px; cursor:pointer; font-weight:700; }
+  .pbtn.main{ background:#1c1c1c; color:#fff; border-color:#1c1c1c; }
+  .pbtn:disabled{ opacity:0.45; cursor:default; }
+  .rotate-row{ display:flex; align-items:center; gap:6px; margin-top:8px; font-family:Arial, sans-serif; }
+  .rbtn{ width:44px; height:38px; border:1px solid #666; background:#f4f4f4; border-radius:4px; font-size:22px; line-height:1; cursor:pointer; }
+  .rbtn:disabled{ opacity:0.4; cursor:default; }
+  .rhint{ font-size:11px; color:#666; }
+  .photo-box{ margin-top:6px; border:1px solid #999; min-height:140px; display:flex; align-items:center; justify-content:center; background:#fafafa; position:relative; }
+  .photo-box .empty{ font-family:Arial, sans-serif; color:#777; font-size:12px; padding:30px 10px; text-align:center; }
+  #photoCanvas{ display:none; width:100%; height:auto; touch-action:none; }
+  body.has-photo #photoCanvas{ display:block; }
+  body.has-photo .photo-box .empty{ display:none; }
+  .ai-line{ font-family:Arial, sans-serif; font-size:11.5px; margin-top:6px; min-height:16px; }
+  .ai-line.busy{ color:var(--accent); }
+  .ai-line.err{ color:var(--fail); }
+  .ai-line.ok{ color:var(--pass); }
+
+  /* details table */
+  table.det{ width:100%; border-collapse:collapse; }
+  table.det td{ border:1px solid var(--ink); padding:4px 6px; vertical-align:middle; }
+  table.det td.l{ width:34mm; white-space:nowrap; }
+  table.det td.st{ width:34mm; font-family:Arial, sans-serif; font-size:10.5px; }
+  table.det input.f, table.det select.f{ width:100%; border:none; font-family:inherit; font-size:13px; padding:3px 2px; background:transparent; }
+  table.det input.f:focus{ outline:none; background:#fff8dd; }
+  tr.flag-unsure td{ background:var(--warn-bg); }
+  tr.flag-missing td{ background:var(--miss-bg); }
+  .tag{ display:inline-block; border-radius:3px; padding:1px 6px; }
+  .tag.ai{ color:var(--pass); }
+  .tag.unsure{ color:#7a4a00; font-weight:700; }
+  .tag.missing{ color:var(--fail); font-weight:700; }
+  .tag.edited{ color:#333; }
+  .tag.auto{ color:#555; }
+  .judge{ display:flex; gap:14px; flex-wrap:wrap; }
+  .judge label{ white-space:nowrap; }
+  textarea.rem{ width:100%; min-height:44px; border:none; font-family:inherit; font-size:12.5px; resize:vertical; }
+
+  .signoff-row{ display:flex; gap:24px; padding:14px 2px 2px; font-size:12.5px; }
+  .signoff-row .grp{ display:flex; align-items:baseline; gap:6px; flex:1; }
+  .fill{ border:none; border-bottom:1px solid var(--ink); background:transparent; font-family:inherit; font-size:12.5px; padding:1px 3px; flex:1; }
+  .signline{ position:relative; flex:1; display:flex; min-width:60px; }
+  .signline .signshow{ display:none; flex:1; align-items:flex-end; gap:10px; border-bottom:1px solid var(--ink); padding:0 3px 1px; min-height:21px; }
+  .signline .signshow img.sig-img{ max-height:30px; max-width:95px; display:block; margin-bottom:-5px; }
+  .signline .signshow .sig-name{ font-weight:bold; white-space:nowrap; }
+  body.signed .signline input.fill{ display:none; }
+  body.signed .signline .signshow{ display:flex; }
+  .sig-btn{ font-family:Arial, sans-serif; font-size:10px; padding:3px 8px; border:1px solid #999; background:#f4f4f4; border-radius:3px; cursor:pointer; margin-left:6px; display:none; }
+  body.verify-mode .sig-btn{ display:inline-block; }
+  .footer-row{ display:flex; justify-content:space-between; padding:14px 2px 0; font-size:11px; }
+
+  body.verify-mode .edit-only{ display:none !important; }
+  .verify-only{ display:none; }
+  body.verify-mode .verify-only{ display:block; }
+  body.verify-mode .content{ pointer-events:none; }
+  body.verify-mode .content .verify-allow, body.verify-mode .content .verify-allow *{ pointer-events:auto; }
+
+  /* status bar */
+  .statusbar{ position:fixed; top:0; left:0; right:0; background:#1c1c1c; color:#eee; z-index:50;
+    display:flex; gap:10px; align-items:center; padding:6px 10px; font-family:Arial, sans-serif; font-size:11px; }
+  .statusbar .chip{ background:#333; border-radius:10px; padding:3px 9px; }
+  .statusbar .chip.ok{ background:var(--pass); color:#fff; }
+  .statusbar .chip.warn{ background:var(--warn); color:#fff; }
+  .statusbar .zoombtn{ background:#333; color:#eee; border:none; border-radius:4px; font-size:15px; line-height:1; padding:5px 11px; cursor:pointer; margin:0 1px; }
+  .statusbar .zoombtn.first{ margin-left:auto; }
+  #settingsBtn{ background:none; border:none; color:#ccc; font-size:16px; cursor:pointer; padding:2px 6px; }
+
+  .actionbar{ position:fixed; bottom:0; left:0; right:0; background:#1c1c1c; display:flex; gap:8px; padding:8px 10px; z-index:50; font-family:Arial, sans-serif; }
+  .actionbar button{ flex:1; min-width:90px; border:none; border-radius:3px; padding:11px 6px; font-size:11px; font-weight:700;
+    text-transform:uppercase; letter-spacing:0.02em; cursor:pointer; white-space:nowrap; }
+  .btn-primary{ background:#f2a93b; color:#2b1c00; }
+  .btn-secondary{ background:#454c54; color:#fff; }
+  .btn-danger{ background:transparent; color:#f19b9b; border:1px solid #6b3a3a !important; }
+  button:disabled{ opacity:0.5; }
+
+  /* modals keep plain centring */
+  .modal, .settings-panel{ display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:120; align-items:center; justify-content:center; }
+  .modal.show, .settings-panel.show{ display:flex; }
+  .modal-box, .settings-box{ background:#fff; border-radius:6px; padding:16px; width:94%; max-width:540px; font-family:Arial, sans-serif; color:#222; max-height:88vh; overflow:auto; }
+  .modal-box h3, .settings-box h3{ margin:0 0 10px; font-size:15px; }
+  .settings-box p{ font-size:12px; color:#555; margin:6px 0; }
+  .settings-box input, .modal-box input.txt{ width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:13px; margin-top:6px; }
+  .modal-tabs{ display:flex; gap:6px; margin-bottom:10px; }
+  .modal-tabs button{ flex:1; padding:8px; border:1px solid #ccc; background:#f2f2f2; border-radius:4px; font-size:12px; cursor:pointer; }
+  .modal-tabs button.active{ background:#1c1c1c; color:#fff; border-color:#1c1c1c; }
+  .tabpane{ display:none; } .tabpane.show{ display:block; }
+  #sigPad{ width:100%; height:170px; border:1px dashed #aaa; border-radius:4px; touch-action:none; background:#fff; display:block; }
+  .modal-actions, .settings-actions{ display:flex; gap:8px; margin-top:12px; }
+  .modal-actions button, .settings-actions button{ flex:1; padding:10px; border:none; border-radius:4px; font-weight:700; cursor:pointer; font-size:12px; }
+  .saved-list, .pending-list{ list-style:none; margin:0; padding:0; }
+  .saved-list li, .pending-list li{ border:1px solid #ddd; border-radius:4px; padding:8px 10px; margin-bottom:6px; display:flex; align-items:center; gap:10px; }
+  .saved-list li img{ max-height:34px; max-width:130px; }
+  .saved-list li .nm, .pending-list li .nm{ flex:1; font-size:12px; }
+  .saved-list li button, .pending-list li button{ font-size:11px; padding:5px 9px; border:1px solid #999; background:#f4f4f4; border-radius:3px; cursor:pointer; }
+  .pending-list li .sub{ display:block; color:#666; font-size:10.5px; margin-top:2px; }
+  .modal-box .note{ font-size:11px; color:#666; margin:8px 0 0; }
+  .modal-box label.rmb{ display:flex; align-items:center; gap:6px; font-size:11.5px; color:#444; margin-top:8px; }
+  .confirm-list{ font-size:12.5px; border-collapse:collapse; width:100%; }
+  .confirm-list td{ border-bottom:1px solid #eee; padding:4px 4px; }
+  .confirm-list td:first-child{ color:#666; width:40%; }
+
+  @media print{
+    body{ background:#fff; padding-top:0; }
+    .statusbar, .actionbar, .edit-only, .sig-btn{ display:none !important; }
+    .scroll-wrap{ padding:0; }
+    .page{ width:210mm; box-shadow:none; }
+    @page{ size:A4; margin:0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="statusbar">
+  <strong>QF-QC-002(B)</strong>
+  <span class="chip" id="chipPhoto">Photo: none</span>
+  <span class="chip" id="chipFields">Details: 0 / 9</span>
+  <span class="chip" id="chipJudge">Judgement: not set</span>
+  <span class="chip" id="chipSync">Sync: ready</span>
+  <button class="zoombtn first" onclick="stepZoom(-1)" title="Zoom out">&minus;</button>
+  <span class="chip" id="chipZoom">100%</span>
+  <button class="zoombtn" onclick="stepZoom(1)" title="Zoom in">+</button>
+  <button class="zoombtn" onclick="setZoom(1)" title="Fit width">&#8596;</button>
+  <button id="settingsBtn" onclick="openSettings()" title="Sync settings">&#9881;</button>
+</div>
+
+<div class="scroll-wrap">
+<div class="page">
+<div class="content">
+
+  <div class="title-row">
+    <h1>QC Inspection &ndash; Drawing Check</h1>
+    <span class="sub">For new products without an inspection form</span>
+  </div>
+  <p class="hint edit-only">Take a photo of the marked-up drawing. The details written on it are read automatically; check each one before you submit.</p>
+
+  <h2>Drawing</h2>
+  <div class="photo-actions edit-only">
+    <button class="pbtn main" onclick="document.getElementById('camInput').click()">Take photo</button>
+    <button class="pbtn" onclick="document.getElementById('fileInput').click()">Choose from files</button>
+    <button class="pbtn" id="btnReread" onclick="readWithAI()" disabled>Read again</button>
+    <input type="file" id="camInput"  accept="image/*" capture="environment" style="display:none" onchange="onPhotoPicked(this)">
+    <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="onPhotoPicked(this)">
+  </div>
+  <div class="rotate-row verify-allow">
+    <button class="rbtn" id="btnRotL" onclick="rotatePhoto(-1)" title="Rotate left" aria-label="Rotate left" disabled>&#8634;</button>
+    <button class="rbtn" id="btnRotR" onclick="rotatePhoto(1)"  title="Rotate right" aria-label="Rotate right" disabled>&#8635;</button>
+    <span class="rhint">Rotate if the drawing is sideways</span>
+  </div>
+  <div class="photo-box verify-allow">
+    <div class="empty" id="photoEmpty">No photo yet.</div>
+    <canvas id="photoCanvas"></canvas>
+  </div>
+  <div class="ai-line" id="aiLine"></div>
+  <p class="hint verify-only" id="stampHint">Tap <b>Sign</b> on the Verified By line. Your signature, name and date are placed in an empty part of the drawing; drag it to move it.</p>
+
+  <h2>Inspection details</h2>
+  <table class="det">
+    <tr id="tr_desc"><td class="l">Description</td><td><input class="f" id="f_desc" placeholder="Drawing title (from the title block)"></td><td class="st" id="st_desc"></td></tr>
+    <tr id="tr_dwg"><td class="l">Drawing No.</td><td><input class="f" id="f_dwg" placeholder="e.g. PH250035-M-032 Rev 0"></td><td class="st" id="st_dwg"></td></tr>
+    <tr id="tr_date"><td class="l">1) Date</td><td><input class="f" type="date" id="f_date"></td><td class="st" id="st_date"></td></tr>
+    <tr id="tr_job"><td class="l">2) Job Order No.</td><td><input class="f" id="f_job" inputmode="numeric"></td><td class="st" id="st_job"></td></tr>
+    <tr id="tr_dept"><td class="l">3) Department</td><td><input class="f" id="f_dept" list="deptList"></td><td class="st" id="st_dept"></td></tr>
+    <tr id="tr_mac"><td class="l">4) Machine No.</td><td><input class="f" id="f_mac"></td><td class="st" id="st_mac"></td></tr>
+    <tr id="tr_lot"><td class="l">5) Lot Size</td><td><input class="f" id="f_lot" inputmode="numeric"></td><td class="st" id="st_lot"></td></tr>
+    <tr id="tr_smp"><td class="l">6) Sample Size</td><td><input class="f" id="f_smp" inputmode="numeric"></td><td class="st" id="st_smp"></td></tr>
+    <tr id="tr_col"><td class="l">7) Colour</td><td><input class="f" id="f_col" list="colList"></td><td class="st" id="st_col"></td></tr>
+    <tr id="tr_judge"><td class="l">8) Judgement</td><td>
+      <div class="judge">
+        <label><input type="radio" name="judge" value="Accept"> Accept</label>
+        <label><input type="radio" name="judge" value="Sorting/Rework"> Sorting/Rework</label>
+        <label><input type="radio" name="judge" value="Return/Scrap"> Return/Scrap</label>
+        <label><input type="radio" name="judge" value="Waive"> Waive</label>
+        <label><input type="radio" name="judge" value="Pending"> Pending</label>
+      </div></td><td class="st" id="st_judge"></td></tr>
+    <tr id="tr_insp"><td class="l">9) Inspected By</td><td><input class="f" id="f_insp"></td><td class="st" id="st_insp"></td></tr>
+    <tr><td class="l">Category</td><td>Other</td><td class="st"><span class="tag auto">Automatic</span></td></tr>
+    <tr><td class="l">Remarks</td><td colspan="2"><textarea class="rem" id="f_rem"></textarea></td></tr>
+  </table>
+  <datalist id="deptList"><option>Laser</option><option>Slitting</option><option>Bending</option><option>Stamping</option><option>Forming</option><option>Welding</option><option>Packing</option></datalist>
+  <datalist id="colList"><option>Orange</option><option>Dim Grey</option><option>Blue</option><option>Black</option><option>White</option><option>Galvanised</option></datalist>
+
+  <div class="signoff-row">
+    <div class="grp"><span>Inspected By:</span><input class="fill" id="inspectedByLine" readonly></div>
+    <div class="grp verify-allow"><span>Verified By:</span>
+      <div class="signline" id="signline">
+        <input class="fill" id="verifiedBy" readonly>
+        <div class="signshow"><img class="sig-img" alt=""><span class="sig-name"></span><span class="sig-date"></span></div>
+      </div>
+      <button class="sig-btn" onclick="openSigModal()">Sign</button>
+    </div>
+  </div>
+  <div class="footer-row"><span>QF-QC-002(B)</span><span>Drawing Check R0</span></div>
+
+</div>
+</div>
+</div>
+
+<div class="actionbar">
+  <button class="btn-primary"   id="btnSubmit"     onclick="submitRecord()">Submit</button>
+  <button class="btn-secondary" id="btnVerify"     onclick="openVerifyPanel()">Verify</button>
+  <button class="btn-primary"   id="btnVerifySave" onclick="verifyAndSave()" style="display:none;">Verify &amp; Save</button>
+  <button class="btn-secondary" id="btnExitVerify" onclick="exitVerifyMode()" style="display:none;">Exit</button>
+  <button class="btn-danger"    id="btnReset"      onclick="resetForm()">Reset</button>
+</div>
+
+<div id="settingsPanel" class="settings-panel">
+  <div class="settings-box">
+    <h3>Sync settings</h3>
+    <p>Apps Script Web App URL for the QC Submissions Inbox. Saved on this tablet only.</p>
+    <input type="text" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/…/exec">
+    <div class="settings-actions">
+      <button onclick="saveSettings()" class="btn-primary">Save</button>
+      <button onclick="closeSettings()" class="btn-secondary">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="confirmModal" class="modal">
+  <div class="modal-box">
+    <h3>Submit this record?</h3>
+    <table class="confirm-list" id="confirmList"></table>
+    <p class="note">Check each value against the drawing. It goes to the QC Submissions Inbox as written here.</p>
+    <div class="modal-actions">
+      <button onclick="confirmSubmit()" class="btn-primary" id="btnConfirmSubmit">Submit</button>
+      <button onclick="closeModal('confirmModal')" class="btn-secondary">Back</button>
+    </div>
+  </div>
+</div>
+
+<div id="sigModal" class="modal">
+  <div class="modal-box">
+    <h3>Verifier signature</h3>
+    <div class="modal-tabs">
+      <button id="tabDrawBtn" class="active" onclick="sigTab('draw')">Draw</button>
+      <button id="tabSavedBtn" onclick="sigTab('saved')">My saved signature</button>
+    </div>
+    <div id="tabDraw" class="tabpane show">
+      <canvas id="sigPad"></canvas>
+      <p class="note">Sign with a finger or stylus.</p>
+      <input type="text" class="txt" id="sigName" placeholder="Name as it should appear on the drawing">
+      <label class="rmb"><input type="checkbox" id="sigRemember" checked> Remember this signature on this device</label>
+      <div class="modal-actions">
+        <button onclick="sigClear()" class="btn-secondary">Clear</button>
+        <button onclick="sigUseDrawn()" class="btn-primary">Use this</button>
+        <button onclick="closeModal('sigModal')" class="btn-secondary">Cancel</button>
+      </div>
+    </div>
+    <div id="tabSaved" class="tabpane">
+      <ul class="saved-list" id="savedSigList"></ul>
+      <div class="modal-actions"><button onclick="closeModal('sigModal')" class="btn-secondary">Cancel</button></div>
+    </div>
+  </div>
+</div>
+
+<div id="verifyModal" class="modal">
+  <div class="modal-box">
+    <h3>Drawing checks awaiting verification</h3>
+    <ul class="pending-list" id="pendingList"><li><span class="nm">Loading&hellip;</span></li></ul>
+    <div class="modal-actions"><button onclick="closeModal('verifyModal')" class="btn-secondary">Close</button></div>
+  </div>
+</div>
+
+<div id="pinModal" class="modal">
+  <div class="modal-box" style="max-width:380px;">
+    <h3>Supervisor PIN</h3>
+    <p class="note" style="margin:0 0 4px;">Signing as <b id="pinWho"></b></p>
+    <input type="password" class="txt" id="pinInput" inputmode="numeric" autocomplete="off"
+           placeholder="PIN" onkeydown="if(event.key==='Enter') submitPin();">
+    <p class="note" id="pinErr" style="color:#c0392b; display:none;"></p>
+    <div class="modal-actions">
+      <button onclick="submitPin()" class="btn-primary">Confirm</button>
+      <button onclick="closePin()" class="btn-secondary">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script id="qc-app-back">
+/* Opened from the QC Verify app on a tablet or phone: after Verify & Save, or
+   Exit, go back to the list instead of reloading this record. On the laptop
+   (file share) nothing changes. */
+window.qcInApp = function(){
+  return location.protocol === 'https:' &&
+    ((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true);
+};
+window.qcBackToList = function(){
+  if(history.length > 1) history.back(); else location.replace('QC_Verify_Hub.html');
+};
+</script>
+<script>
+/* ================= Constants ================= */
+const SETTINGS_KEY = 'qc_form_settings_v1';      /* QC key — never the IQC one */
+const SIG_KEY      = 'qc_signatures_v1';          /* shared with every QC form on this tablet */
+const FORM_NAME    = 'QF-QC-002(B) Drawing Check';
+const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwYz5hw_8wfAMPlohKF-yQnEWKA8c1pzg7ELBgkPLw8_oPVcGFC59VRSlRzF5iAc3SCjA/exec';
+const PHOTO_MAX_EDGE = 2200;    /* px; keeps handwriting legible and the upload small */
+const JUDGE_COL = {Accept:'Acc', Waive:'Waive', 'Sorting/Rework':'Rw/So', 'Return/Scrap':'Rtn/Scrap', Pending:'Pending'};
+
+/* The nine required details, in the order QC writes them. */
+const FIELDS = [
+  {k:'date',  id:'f_date', tr:'tr_date',  st:'st_date',  label:'Date',            ai:'date'},
+  {k:'job',   id:'f_job',  tr:'tr_job',   st:'st_job',   label:'Job Order No.',   ai:'job_order'},
+  {k:'dept',  id:'f_dept', tr:'tr_dept',  st:'st_dept',  label:'Department',      ai:'department'},
+  {k:'mac',   id:'f_mac',  tr:'tr_mac',   st:'st_mac',   label:'Machine No.',     ai:'machine_no'},
+  {k:'lot',   id:'f_lot',  tr:'tr_lot',   st:'st_lot',   label:'Lot Size',        ai:'lot_size'},
+  {k:'smp',   id:'f_smp',  tr:'tr_smp',   st:'st_smp',   label:'Sample Size',     ai:'sample_size'},
+  {k:'col',   id:'f_col',  tr:'tr_col',   st:'st_col',   label:'Colour',          ai:'colour'},
+  {k:'judge', id:null,     tr:'tr_judge', st:'st_judge', label:'Judgement',       ai:'judgement'},
+  {k:'insp',  id:'f_insp', tr:'tr_insp',  st:'st_insp',  label:'Inspected By',    ai:'inspected_by'}
+];
+const EXTRA = [
+  {k:'desc', id:'f_desc', tr:'tr_desc', st:'st_desc', label:'Description', ai:'drawing_title'},
+  {k:'dwg',  id:'f_dwg',  tr:'tr_dwg',  st:'st_dwg',  label:'Drawing No.', ai:'drawing_no'}
+];
+
+let PHOTO = null;          /* {dataUrl, w, h, img} */
+let AI_NOTES = '';
+let VERIFY_ROW = null, VERIFY_RECORD = '';
+let SIGNED_DATE = '', SIGNED = null;   /* SIGNED = {img, name, date} */
+let STAMP = null;                      /* {x, y} top-left as fractions of the photo */
+let _submitting = false;
+let DC_SUBMITTED = false;   /* "Sync: submitted" until the next photo is taken */
+const F = k => FIELDS.find(f => f.k === k);
+
+/* ================= Storage / settings ================= */
+function safeStorageGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function safeStorageSet(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } }
+function loadSettings(){
+  try{
+    const s = JSON.parse(safeStorageGet(SETTINGS_KEY) || '{}');
+    if(!s.scriptUrl) s.scriptUrl = DEFAULT_SCRIPT_URL;
+    return s;
+  }catch(e){ return { scriptUrl: DEFAULT_SCRIPT_URL }; }
+}
+function openSettings(){ document.getElementById('scriptUrlInput').value = loadSettings().scriptUrl || ''; document.getElementById('settingsPanel').classList.add('show'); }
+function closeSettings(){ document.getElementById('settingsPanel').classList.remove('show'); }
+function saveSettings(){
+  const url = document.getElementById('scriptUrlInput').value.trim();
+  safeStorageSet(SETTINGS_KEY, JSON.stringify({ scriptUrl: url }));
+  closeSettings(); updateChips();
+}
+function withQuery(url, q){ return url + (url.indexOf('?') >= 0 ? '&' : '?') + q; }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+function escapeHtml(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ================= Zoom ================= */
+var ZOOM_STEPS = [0.6, 0.75, 0.9, 1, 1.25, 1.5, 1.75, 2, 2.5], zoomIdx = 3;
+function setZoom(z){
+  var i = ZOOM_STEPS.indexOf(z); if(i >= 0) zoomIdx = i;
+  document.querySelector('.page').style.zoom = ZOOM_STEPS[zoomIdx];
+  document.getElementById('chipZoom').textContent = Math.round(ZOOM_STEPS[zoomIdx]*100) + '%';
+}
+function stepZoom(d){ zoomIdx = Math.min(ZOOM_STEPS.length-1, Math.max(0, zoomIdx+d)); setZoom(ZOOM_STEPS[zoomIdx]); }
+
+/* ================= Field helpers ================= */
+function getVal(f){
+  if(f.k === 'judge'){ const r = document.querySelector('input[name=judge]:checked'); return r ? r.value : ''; }
+  return (document.getElementById(f.id).value || '').trim();
+}
+function setVal(f, v){
+  if(f.k === 'judge'){
+    document.querySelectorAll('input[name=judge]').forEach(r => r.checked = (r.value === v));
+    return;
+  }
+  document.getElementById(f.id).value = v || '';
+}
+function setFlag(f, kind, customText){
+  const tr = document.getElementById(f.tr), st = document.getElementById(f.st);
+  tr.classList.remove('flag-unsure','flag-missing');
+  const text = customText || { ai:'Read from drawing', unsure:'Check this', missing:'Not on drawing — fill in', edited:'Typed by QC', '':'' }[kind || ''];
+  if(kind === 'unsure')  tr.classList.add('flag-unsure');
+  if(kind === 'missing') tr.classList.add('flag-missing');
+  st.innerHTML = text ? '<span class="tag ' + kind + '">' + text + '</span>' : '';
+  tr.dataset.flag = kind || '';
+}
+function onFieldEdited(f){
+  if(document.body.classList.contains('verify-mode')) return;
+  const v = getVal(f);
+  setFlag(f, v ? 'edited' : (document.getElementById(f.tr).dataset.flag === 'missing' ? 'missing' : ''));
+  if(f.k === 'insp') document.getElementById('inspectedByLine').value = v;
+  updateChips();
+}
+FIELDS.concat(EXTRA).forEach(f=>{
+  if(f.k === 'judge') document.querySelectorAll('input[name=judge]').forEach(r => r.addEventListener('change', ()=>onFieldEdited(f)));
+  else document.getElementById(f.id).addEventListener('input', ()=>onFieldEdited(f));
+});
+
+function updateChips(){
+  const filled = FIELDS.filter(f => getVal(f)).length;
+  const cf = document.getElementById('chipFields');
+  cf.textContent = 'Details: ' + filled + ' / ' + FIELDS.length;
+  cf.className = 'chip' + (filled === FIELDS.length ? ' ok' : (PHOTO ? ' warn' : ''));
+  const j = getVal(F('judge'));
+  const cj = document.getElementById('chipJudge');
+  cj.textContent = 'Judgement: ' + (j || 'not set');
+  cj.className = 'chip' + (j === 'Accept' ? ' ok' : (j ? ' warn' : ''));
+  const cp = document.getElementById('chipPhoto');
+  cp.textContent = 'Photo: ' + (PHOTO ? 'ready' : 'none');
+  cp.className = 'chip' + (PHOTO ? ' ok' : '');
+  if(!VERIFY_ROW){
+    const cs = document.getElementById('chipSync');
+    if(PHOTO) DC_SUBMITTED = false;
+    cs.textContent = navigator.onLine === false ? 'Sync: offline' : (DC_SUBMITTED ? 'Sync: submitted \u2713' : 'Sync: ready');
+    cs.className = 'chip' + (navigator.onLine === false ? ' warn' : ' ok');
+  }
+}
+window.addEventListener('online', updateChips);
+window.addEventListener('offline', updateChips);
+
+/* ================= Photo ================= */
+function onPhotoPicked(input){
+  const file = input.files && input.files[0];
+  input.value = '';
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => loadPhotoFromUrl(reader.result, true);
+  reader.onerror = () => alert('Could not open that photo. Try taking it again.');
+  reader.readAsDataURL(file);
+}
+function loadPhotoFromUrl(src, thenRead){
+  return new Promise((resolve, reject)=>{
+    const img = new Image();
+    img.onload = () => {
+      /* Downscale so a 12-megapixel camera photo becomes a ~0.5 MB JPG. Chrome
+         applies the camera's rotation flag when drawing, so the drawing stays upright. */
+      const k = Math.min(1, PHOTO_MAX_EDGE / Math.max(img.naturalWidth, img.naturalHeight));
+      const w = Math.round(img.naturalWidth * k), h = Math.round(img.naturalHeight * k);
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0,0,w,h); x.drawImage(img, 0, 0, w, h);
+      const dataUrl = c.toDataURL('image/jpeg', 0.85);
+      const final = new Image();
+      final.onload = () => {
+        PHOTO = { dataUrl: dataUrl, w: w, h: h, img: final };
+        document.body.classList.add('has-photo');
+        document.getElementById('btnReread').disabled = false;
+        document.getElementById('btnRotL').disabled = false;
+        document.getElementById('btnRotR').disabled = false;
+        redrawPhoto(); updateChips();
+        if(thenRead) readWithAI();
+        resolve();
+      };
+      final.src = dataUrl;
+    };
+    img.onerror = () => { alert('That file is not a photo this tablet can open.'); reject(new Error('bad image')); };
+    img.src = src;
+  });
+}
+function redrawPhoto(){
+  if(!PHOTO) return;
+  const c = document.getElementById('photoCanvas');
+  c.width = PHOTO.w; c.height = PHOTO.h;
+  drawComposite(c.getContext('2d'), PHOTO.w, PHOTO.h);
+}
+
+/* Turn the photo 90 degrees. The saved JPG (and the supervisor's signed copy)
+   uses the turned photo. A signature stamp is moved to a new empty spot. */
+function rotatePhoto(dir){
+  if(!PHOTO) return;
+  const w = PHOTO.h, h = PHOTO.w;
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d');
+  x.translate(w/2, h/2); x.rotate(dir * Math.PI/2); x.drawImage(PHOTO.img, -PHOTO.w/2, -PHOTO.h/2);
+  const dataUrl = c.toDataURL('image/jpeg', 0.9);
+  const img = new Image();
+  img.onload = () => {
+    PHOTO = { dataUrl: dataUrl, w: w, h: h, img: img };
+    if(SIGNED) STAMP = findBlankSpot(PHOTO.img, PHOTO.w, PHOTO.h);
+    redrawPhoto();
+  };
+  img.src = dataUrl;
+}
+
+/* ================= AI read ================= */
+function setAiLine(text, cls){ const el = document.getElementById('aiLine'); el.textContent = text; el.className = 'ai-line ' + (cls || ''); }
+
+async function readWithAI(){
+  if(!PHOTO) return;
+  if(navigator.onLine === false){ setAiLine('Offline. Connect to Wi-Fi, then tap Read again. You can also type the details yourself.', 'err'); return; }
+  const btn = document.getElementById('btnReread'); btn.disabled = true;
+  setAiLine('Reading the drawing… (about 10–20 seconds)', 'busy');
+  const url = loadSettings().scriptUrl;
+  const token = Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+  const body = JSON.stringify({ action:'dcRead', token: token, mime:'image/jpeg', image: PHOTO.dataUrl.split(',')[1] });
+  let res = null;
+  try{
+    const r = await fetch(url, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: body });
+    res = await r.json();
+  }catch(e){
+    /* The answer could not be read directly (browser security on file:// pages).
+       Send it again without reading, then collect the answer by token. */
+    try{
+      await fetch(url, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: body });
+      for(let i = 0; i < 25 && !res; i++){
+        await new Promise(r => setTimeout(r, 2000));
+        try{
+          const j = await (await fetch(withQuery(url, 'action=dcResult&token=' + token))).json();
+          if(j && !j.pending) res = j;
+        }catch(e2){}
+      }
+    }catch(e3){}
+  }
+  btn.disabled = false;
+  if(!res){ setAiLine('No answer from the server. Check the connection and tap Read again, or type the details yourself.', 'err'); return; }
+  if(!res.ok){
+    const msg = String(res.error || '');
+    setAiLine(/GEMINI_API_KEY|api key/i.test(msg)
+      ? 'Reading is not set up on the server yet (Gemini key missing). Type the details yourself for now.'
+      : 'Could not read the drawing: ' + msg + ' — type the details yourself or tap Read again.', 'err');
+    return;
+  }
+  applyAI(res.fields || {});
+}
+
+function normJudge(v){
+  const s = String(v || '').trim().toLowerCase();
+  if(!s) return '';
+  if(/^acc|^ok|^pass/.test(s)) return 'Accept';
+  if(/sort|rework|rw/.test(s)) return 'Sorting/Rework';
+  if(/return|scrap|reject|rtn/.test(s)) return 'Return/Scrap';
+  if(/waive/.test(s)) return 'Waive';
+  if(/pend/.test(s)) return 'Pending';
+  return '';
+}
+function applyAI(a){
+  const unsure = (a.unsure || []).map(x => String(x).toLowerCase());
+  const isUnsure = key => unsure.some(u => u.indexOf(key) >= 0 || key.indexOf(u) >= 0);
+  const out = {
+    drawing_title: String(a.drawing_title || '').trim(),
+    drawing_no: [a.drawing_no, a.drawing_rev ? 'Rev ' + String(a.drawing_rev).replace(/^rev\.?\s*/i,'') : ''].filter(Boolean).join(' ').trim(),
+    date: /^\d{4}-\d{2}-\d{2}$/.test(String(a.date || '').trim()) ? String(a.date).trim() : '',
+    job_order: String(a.job_order || '').trim(),
+    department: String(a.department || '').trim(),
+    machine_no: String(a.machine_no || '').trim(),
+    lot_size: String(a.lot_size || '').replace(/[^\d.]/g, ''),
+    sample_size: String(a.sample_size || '').replace(/[^\d.]/g, ''),
+    colour: String(a.colour || '').trim(),
+    judgement: normJudge(a.judgement),
+    inspected_by: String(a.inspected_by || '').trim()
+  };
+  let missing = 0, check = 0;
+  FIELDS.concat(EXTRA).forEach(f=>{
+    const v = out[f.ai];
+    if(v){
+      setVal(f, v);
+      const u = isUnsure(f.ai) || (f.ai === 'date' && a.date && !out.date);
+      setFlag(f, u ? 'unsure' : 'ai'); if(u) check++;
+    }else{
+      if(f.ai === 'date' && getVal(f)) { setFlag(f, 'unsure'); check++; return; }   /* keep today's date, but ask */
+      if(f.ai === 'sample_size'){ setVal(f, '1'); setFlag(f, 'unsure', 'Not on drawing — set to 1'); check++; return; }
+      setVal(f, '');
+      setFlag(f, 'missing'); if(FIELDS.indexOf(f) >= 0) missing++;
+    }
+  });
+  document.getElementById('inspectedByLine').value = getVal(F('insp'));
+  AI_NOTES = String(a.notes || '').trim();
+  const parts = ['Read done.'];
+  if(missing) parts.push(missing + ' detail' + (missing > 1 ? 's are' : ' is') + ' not on the drawing (red).');
+  if(check)   parts.push(check + ' to check (amber).');
+  if(!missing && !check) parts.push('Check the values, then Submit.');
+  if(AI_NOTES) parts.push('Note: ' + AI_NOTES);
+  setAiLine(parts.join(' '), missing ? 'err' : 'ok');
+  updateChips();
+}
+
+/* ================= Submit ================= */
+function collectRecord(){
+  const v = {}; FIELDS.concat(EXTRA).forEach(f => v[f.k] = getVal(f));
+  v.rem = (document.getElementById('f_rem').value || '').trim();
+  return v;
+}
+function submitRecord(){
+  if(_submitting) return;
+  if(!PHOTO){ alert('Take a photo of the drawing first.'); return; }
+  const v = collectRecord();
+  const missing = FIELDS.filter(f => !v[f.k]).map(f => f.label);
+  if(!v.desc) missing.unshift('Description');
+  if(missing.length){
+    alert('Fill in before submitting:\n\n• ' + missing.join('\n• ') +
+          '\n\nIf a detail truly does not apply, type "-".');
+    return;
+  }
+  const rows = [['Description', v.desc], ['Drawing No.', v.dwg || '—']]
+    .concat(FIELDS.map(f => [f.label, v[f.k]]))
+    .concat([['Category', 'Other']]);
+  document.getElementById('confirmList').innerHTML =
+    rows.map(r => '<tr><td>' + escapeHtml(r[0]) + '</td><td><b>' + escapeHtml(r[1]) + '</b></td></tr>').join('');
+  document.getElementById('confirmModal').classList.add('show');
+}
+
+function buildRow(v){
+  const res = {Acc:'', Waive:'', 'Rw/So':'', 'Rtn/Scrap':'', Pending:''};
+  if(JUDGE_COL[v.judge]) res[JUDGE_COL[v.judge]] = 'v';
+  const remark = [v.col && v.col !== '-' ? 'Colour: ' + v.col : '',
+                  v.dwg ? 'Dwg: ' + v.dwg : '', v.rem].filter(Boolean).join('; ');
+  return {
+    'No.': '',
+    'Job Order No.': v.job,
+    'Department / Section': v.dept,
+    'Machine No./Tag No./Operator': v.mac,
+    'Category': 'Other',
+    'Description': v.desc,
+    'Size': '',
+    'Qty': v.lot,
+    'Sample Size': v.smp || 1,
+    'Acc': res.Acc, 'Waive': res.Waive, 'Rw/So': res['Rw/So'], 'Rtn/Scrap': res['Rtn/Scrap'], 'Pending': res.Pending,
+    'QC Inspector': v.insp,
+    'Remark': remark,
+    'Colour': v.col,
+    'Date': v.date
+  };
+}
+function stampNow(){
+  const n = new Date(), p = x => String(x).padStart(2,'0');
+  return String(n.getFullYear()) + p(n.getMonth()+1) + p(n.getDate()) + '_' + p(n.getHours()) + p(n.getMinutes()) + p(n.getSeconds());
+}
+
+async function confirmSubmit(){
+  if(_submitting) return;
+  _submitting = true;
+  const btn = document.getElementById('btnConfirmSubmit'), main = document.getElementById('btnSubmit');
+  btn.disabled = true; main.disabled = true; btn.textContent = 'Sending…';
+  const url = loadSettings().scriptUrl;
+  const v = collectRecord();
+  const capturedAt = stampNow();
+  const recordId = capturedAt + '_' + Math.random().toString(36).slice(2,6);
+  const state = { v:1, kind:'drawing-check', recordId: recordId, fields: v,
+                  flags: FIELDS.concat(EXTRA).reduce((o,f)=>{ o[f.k] = document.getElementById(f.tr).dataset.flag || ''; return o; }, {}) };
+  const done = (ok, msg) => {
+    _submitting = false; btn.disabled = false; main.disabled = false; btn.textContent = 'Submit';
+    closeModal('confirmModal');
+    alert(msg);
+    if(ok){ resetForm(true); DC_SUBMITTED = true; updateChips(); }
+  };
+  /* Phase 1 — the row, via GET, returns the sheet row number. */
+  let rowNum = null;
+  try{
+    const payload = { row: buildRow(v), capturedAt: capturedAt, recordId: recordId, formName: FORM_NAME };
+    const j = await (await fetch(withQuery(url, 'payload=' + encodeURIComponent(JSON.stringify(payload))))).json();
+    rowNum = j && j.rowNum;
+  }catch(e){}
+  if(!rowNum){
+    done(false, '\u26a0\ufe0f Not sent. Nothing was saved to the sheet.\n\nCheck the Wi-Fi and tap Submit again. The photo and details are still on screen.');
+    return;
+  }
+  /* Phase 2 — the photo and the reload data for the supervisor. */
+  try{
+    await fetch(url, {
+      method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ screenshot: PHOTO.dataUrl, capturedAt: capturedAt, dateStr: v.date,
+                             rowNum: rowNum, recordId: recordId, formName: FORM_NAME, state: JSON.stringify(state) })
+    });
+  }catch(e){}
+  /* The photo upload cannot be read back directly, so confirm it by checking the
+     record can be reloaded (the server stores the reload data with the photo). */
+  let saved = false;
+  for(let i = 0; i < 10 && !saved; i++){
+    await new Promise(r => setTimeout(r, 2000));
+    try{
+      const j = await (await fetch(withQuery(url, 'action=get&rowNum=' + rowNum))).json();
+      if(j && j.state) saved = true;
+    }catch(e){}
+  }
+  done(true, saved
+    ? '\u2705 Submitted to Google Sheet. It is now waiting for supervisor verification.'
+    : '\u2705 Submitted to Google Sheet, but the photo upload was not confirmed yet.\nDo NOT submit again. Check the photo in the sheet in a minute.');
+}
+
+/* ================= Reset ================= */
+function resetForm(silent){
+  if(!silent && !confirm('Clear the photo and all details?')) return;
+  PHOTO = null; AI_NOTES = ''; SIGNED = null; STAMP = null;
+  document.body.classList.remove('has-photo', 'signed');
+  document.getElementById('btnReread').disabled = true;
+  document.getElementById('btnRotL').disabled = true;
+  document.getElementById('btnRotR').disabled = true;
+  FIELDS.concat(EXTRA).forEach(f => { setVal(f, ''); setFlag(f, ''); });
+  document.getElementById('f_rem').value = '';
+  document.getElementById('inspectedByLine').value = '';
+  document.getElementById('f_date').valueAsDate = new Date();
+  document.getElementById('f_smp').value = '1';
+  setAiLine('');
+  updateChips();
+}
+
+/* ================= Verify: list and load ================= */
+async function openVerifyPanel(){
+  const ul = document.getElementById('pendingList');
+  ul.innerHTML = '<li><span class="nm">Loading\u2026</span></li>';
+  document.getElementById('verifyModal').classList.add('show');
+  try{
+    const j = await (await fetch(withQuery(loadSettings().scriptUrl, 'action=list&formName=' + encodeURIComponent(FORM_NAME)))).json();
+    const rows = (j && j.records) || [];
+    if(!rows.length){ ul.innerHTML = '<li><span class="nm">Nothing is waiting for verification.</span></li>'; return; }
+    ul.innerHTML = rows.map(rec =>
+      '<li><span class="nm"><b>' + escapeHtml(rec.jobOrder || '(no job order)') + '</b>' +
+      '<span class="sub">' + escapeHtml(rec.description || '') + ' \u00b7 ' + escapeHtml(rec.date || '') +
+      ' \u00b7 ' + escapeHtml(rec.inspector || '') + '</span></span>' +
+      '<button onclick="loadForVerify(' + Number(rec.rowNum) + ')">Open</button></li>').join('');
+  }catch(e){
+    ul.innerHTML = '<li><span class="nm">Could not reach the server. Check the connection and try again.</span></li>';
+  }
+}
+
+async function loadForVerify(rowNum){
+  const url = loadSettings().scriptUrl;
+  try{
+    const j = await (await fetch(withQuery(url, 'action=get&rowNum=' + rowNum))).json();
+    if(!j || !j.state){ alert('That record has no saved data to reload.'); return; }
+    const st = JSON.parse(j.state);
+    resetForm(true);
+    restoreState(st);
+    closeModal('verifyModal');
+    setVerifyMode(true, rowNum);
+    VERIFY_RECORD = st.recordId || '';
+    setAiLine('Loading the drawing photo\u2026', 'busy');
+    const p = await (await fetch(withQuery(url, 'action=dcPhoto&recordId=' + encodeURIComponent(VERIFY_RECORD)))).json();
+    if(!p || !p.ok){ setAiLine('Could not load the photo: ' + ((p && p.error) || 'no answer') + '. Close and open this record again in a minute.', 'err'); return; }
+    await loadPhotoFromUrl('data:' + (p.mime || 'image/jpeg') + ';base64,' + p.b64, false);
+    setAiLine('');
+  }catch(e){
+    alert('Could not load that record: ' + e.message);
+  }
+}
+function restoreState(st){
+  if(!st || !st.fields) return;
+  FIELDS.concat(EXTRA).forEach(f => setVal(f, st.fields[f.k] || ''));
+  document.getElementById('f_rem').value = st.fields.rem || '';
+  document.getElementById('inspectedByLine').value = st.fields.insp || '';
+  updateChips();
+}
+function setVerifyMode(on, rowNum){
+  VERIFY_ROW = on ? rowNum : null;
+  document.body.classList.toggle('verify-mode', on);
+  ['btnSubmit','btnVerify','btnReset'].forEach(id => document.getElementById(id).style.display = on ? 'none' : '');
+  ['btnVerifySave','btnExitVerify'].forEach(id => document.getElementById(id).style.display = on ? '' : 'none');
+  const chip = document.getElementById('chipSync');
+  if(on){ chip.textContent = 'Verifying row ' + rowNum; chip.className = 'chip warn'; }
+  else updateChips();
+}
+function exitVerifyMode(){ if(!confirm('Leave verification without saving?')) return; if(window.qcInApp && qcInApp()) qcBackToList(); else location.replace(location.pathname); }
+
+/* ================= Signature stamp on the drawing ================= */
+function stampSize(W, H, s){
+  const w = Math.round(Math.max(W, H) * 0.22 * (s || 1));
+  return { w: w, h: Math.round(w * 0.40) };
+}
+/* Find the emptiest part of the sheet for the stamp. Works on an 800 px copy:
+   a pixel counts as ink when it is clearly darker than the paper around it (so
+   thin drawing lines count, but a soft shadow does not), and anything much darker
+   than white paper (table, cover, stickers) is avoided. Returns top-left fractions. */
+function findBlankSpot(img, W, H){
+  const sw = 800, sh = Math.max(1, Math.round(800 * H / W));
+  const c = document.createElement('canvas'); c.width = sw; c.height = sh;
+  const x = c.getContext('2d'); x.imageSmoothingQuality = 'high'; x.drawImage(img, 0, 0, sw, sh);
+  const d = x.getImageData(0, 0, sw, sh).data, N = sw*sh;
+  const L = new Float32Array(N);
+  for(let i = 0; i < N; i++) L[i] = 0.299*d[i*4] + 0.587*d[i*4+1] + 0.114*d[i*4+2];
+  const integral = (A) => { const I = new Float64Array((sw+1)*(sh+1));
+    for(let yy = 1; yy <= sh; yy++){ let row = 0;
+      for(let xx = 1; xx <= sw; xx++){ row += A[(yy-1)*sw + (xx-1)]; I[yy*(sw+1)+xx] = I[(yy-1)*(sw+1)+xx] + row; } }
+    return I; };
+  const box = (I, x0, y0, x1, y1) => I[y1*(sw+1)+x1] - I[y0*(sw+1)+x1] - I[y1*(sw+1)+x0] + I[y0*(sw+1)+x0];
+  const IL = integral(L), R = 10;
+  const sorted = Array.from(L).sort((a,b)=>a-b);
+  const paper = sorted[Math.floor(N*0.9)] || 255;
+  const cost = new Float32Array(N);
+  for(let yy = 0; yy < sh; yy++) for(let xx = 0; xx < sw; xx++){
+    const x0 = Math.max(0, xx-R), y0 = Math.max(0, yy-R), x1 = Math.min(sw, xx+R+1), y1 = Math.min(sh, yy+R+1);
+    const bg = box(IL, x0, y0, x1, y1) / ((x1-x0)*(y1-y0));
+    const i = yy*sw + xx;
+    cost[i] = (bg - L[i] > 14 ? 1 : 0) + (bg < paper*0.75 ? 2 : 0);
+  }
+  const I = integral(cost);
+  const mx = Math.round(sw*0.03), my = Math.round(sh*0.03);
+  /* Full size if a clear spot exists; otherwise shrink step by step and keep the
+     size that covers the least ink. */
+  let pick = null;
+  for(const s of [1, 0.85, 0.7, 0.58]){
+    const z = stampSize(W, H, s);
+    const bw = Math.max(8, Math.round(sw * z.w / W)), bh = Math.max(6, Math.round(sh * z.h / H));
+    let best = Infinity, bx = mx, by = my;
+    for(let yy = my; yy + bh <= sh - my; yy += 4) for(let xx = mx; xx + bw <= sw - mx; xx += 4){
+      /* a margin ring around the box also has to be clear, so the stamp does not butt against lines */
+      const g = 6, xa = Math.max(0, xx-g), ya = Math.max(0, yy-g), xb = Math.min(sw, xx+bw+g), yb = Math.min(sh, yy+bh+g);
+      const inner = box(I, xx, yy, xx+bw, yy+bh);
+      const v = inner + 0.5 * (box(I, xa, ya, xb, yb) - inner);
+      if(v < best){ best = v; bx = xx; by = yy; }
+    }
+    if(!pick || best < pick.cost) pick = { x: bx/sw, y: by/sh, s: s, cost: best };
+    if(best <= bw*bh*0.006) break;          /* practically clean: take this size */
+  }
+  return { x: pick.x, y: pick.y, s: pick.s };
+}
+function drawComposite(ctx, W, H){
+  ctx.drawImage(PHOTO.img, 0, 0, W, H);
+  if(!SIGNED || !STAMP) return;
+  const sz = stampSize(W, H, STAMP.s);
+  const x = Math.round(STAMP.x * W), y = Math.round(STAMP.y * H);
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.strokeStyle = '#0b3d91'; ctx.lineWidth = Math.max(2, sz.w/150);
+  ctx.fillRect(x, y, sz.w, sz.h); ctx.strokeRect(x, y, sz.w, sz.h);
+  const pad = sz.w * 0.04, fs = Math.round(sz.w / 14);
+  ctx.fillStyle = '#0b1f5c';
+  ctx.font = 'bold ' + fs + 'px Arial, sans-serif';
+  ctx.textBaseline = 'top';
+  ctx.fillText('Verified by: ' + SIGNED.name, x + pad, y + pad, sz.w - 2*pad);
+  ctx.font = fs + 'px Arial, sans-serif';
+  ctx.fillText('Date: ' + SIGNED.date, x + pad, y + sz.h - pad - fs, sz.w - 2*pad);
+  const top = y + pad + fs*1.25, bottom = y + sz.h - pad - fs*1.25;
+  const availH = Math.max(4, bottom - top), availW = sz.w - 2*pad;
+  if(SIGNED.img && SIGNED.img.naturalWidth){
+    const k = Math.min(availW / SIGNED.img.naturalWidth, availH / SIGNED.img.naturalHeight);
+    const iw = SIGNED.img.naturalWidth * k, ih = SIGNED.img.naturalHeight * k;
+    ctx.drawImage(SIGNED.img, x + pad, top + (availH - ih)/2, iw, ih);
+  }
+  ctx.restore();
+}
+/* Drag the stamp, or tap where it should go. */
+(function(){
+  const c = document.getElementById('photoCanvas');
+  let drag = null;
+  const pt = e => { const r = c.getBoundingClientRect(); return { x:(e.clientX - r.left)/r.width, y:(e.clientY - r.top)/r.height }; };
+  c.addEventListener('pointerdown', e => {
+    if(!SIGNED || !STAMP || !PHOTO) return;
+    e.preventDefault();
+    const p = pt(e), sz = stampSize(PHOTO.w, PHOTO.h, STAMP.s), fw = sz.w/PHOTO.w, fh = sz.h/PHOTO.h;
+    const inside = p.x >= STAMP.x && p.x <= STAMP.x+fw && p.y >= STAMP.y && p.y <= STAMP.y+fh;
+    drag = inside ? { dx: p.x - STAMP.x, dy: p.y - STAMP.y, fw: fw, fh: fh } : { dx: fw/2, dy: fh/2, fw: fw, fh: fh };
+    move(p); c.setPointerCapture && c.setPointerCapture(e.pointerId);
+  });
+  c.addEventListener('pointermove', e => { if(drag){ e.preventDefault(); move(pt(e)); } });
+  c.addEventListener('pointerup', () => drag = null);
+  c.addEventListener('pointercancel', () => drag = null);
+  function move(p){
+    STAMP = { x: Math.min(1-drag.fw, Math.max(0, p.x - drag.dx)), y: Math.min(1-drag.fh, Math.max(0, p.y - drag.dy)), s: STAMP.s };
+    redrawPhoto();
+  }
+})();
+
+function todayDMY(){ const d = new Date(), p = n => String(n).padStart(2,'0'); return p(d.getDate()) + '/' + p(d.getMonth()+1) + '/' + d.getFullYear(); }
+function loadSigs(){ try{ return JSON.parse(safeStorageGet(SIG_KEY) || '[]'); }catch(e){ return []; } }
+function saveSigs(a){ safeStorageSet(SIG_KEY, JSON.stringify(a)); }
+function applySignature(dataUrl, name){
+  if(!PHOTO){ alert('The drawing photo has not loaded yet.'); return; }
+  SIGNED_DATE = todayDMY();
+  const line = document.getElementById('signline');
+  line.querySelector('.sig-img').src = dataUrl;
+  line.querySelector('.sig-name').textContent = name;
+  line.querySelector('.sig-date').textContent = SIGNED_DATE;
+  document.getElementById('verifiedBy').value = name;
+  document.body.classList.add('signed');
+  const img = new Image();
+  img.onload = () => {
+    SIGNED = { img: img, name: name, date: SIGNED_DATE };
+    if(!STAMP) STAMP = findBlankSpot(PHOTO.img, PHOTO.w, PHOTO.h);
+    redrawPhoto();
+    document.getElementById('photoCanvas').scrollIntoView({ block:'center' });
+  };
+  img.src = dataUrl;
+}
+function hasSignature(){ return !!SIGNED; }
+
+let _pad = null, _padCtx = null, _drawing = false, _padDirty = false;
+function openSigModal(){
+  document.getElementById('sigModal').classList.add('show');
+  const nm = document.getElementById('sigName'); if(!nm.value) nm.value = document.getElementById('verifiedBy').value || '';
+  sigTab('draw'); initPad(); renderSavedSigs();
+}
+function sigTab(which){
+  const d = which === 'draw';
+  document.getElementById('tabDraw').classList.toggle('show', d);
+  document.getElementById('tabSaved').classList.toggle('show', !d);
+  document.getElementById('tabDrawBtn').classList.toggle('active', d);
+  document.getElementById('tabSavedBtn').classList.toggle('active', !d);
+  if(d) setTimeout(initPad, 30);
+}
+function initPad(){
+  const cv = document.getElementById('sigPad');
+  if(!cv || !cv.offsetWidth) return;
+  const dpr = window.devicePixelRatio || 1;
+  if(cv.width !== Math.round(cv.offsetWidth*dpr)){
+    cv.width = Math.round(cv.offsetWidth*dpr); cv.height = Math.round(cv.offsetHeight*dpr);
+    _padCtx = cv.getContext('2d'); _padCtx.scale(dpr, dpr);
+    _padCtx.lineWidth = 2.2; _padCtx.lineCap = 'round'; _padCtx.lineJoin = 'round'; _padCtx.strokeStyle = '#101a3a';
+    _padDirty = false;
+  }
+  if(_pad === cv) return;
+  _pad = cv;
+  const pos = e => { const r = cv.getBoundingClientRect(); const p = (e.touches && e.touches[0]) ? e.touches[0] : e; return { x: p.clientX - r.left, y: p.clientY - r.top }; };
+  const start = e => { e.preventDefault(); _drawing = true; _padDirty = true; const p = pos(e); _padCtx.beginPath(); _padCtx.moveTo(p.x, p.y); };
+  const move  = e => { if(!_drawing) return; e.preventDefault(); const p = pos(e); _padCtx.lineTo(p.x, p.y); _padCtx.stroke(); };
+  const end   = () => { _drawing = false; };
+  cv.addEventListener('pointerdown', start); cv.addEventListener('pointermove', move); window.addEventListener('pointerup', end);
+  cv.addEventListener('touchstart', start, {passive:false}); cv.addEventListener('touchmove', move, {passive:false}); cv.addEventListener('touchend', end);
+}
+function sigClear(){ if(_pad && _padCtx){ _padCtx.clearRect(0, 0, _pad.width, _pad.height); _padDirty = false; } }
+function trimmedSignature(cv){
+  const ctx = cv.getContext('2d'); const d = ctx.getImageData(0, 0, cv.width, cv.height).data;
+  let x0 = cv.width, y0 = cv.height, x1 = 0, y1 = 0, found = false;
+  for(let y = 0; y < cv.height; y++) for(let x = 0; x < cv.width; x++){
+    if(d[(y*cv.width + x)*4 + 3] > 12){ found = true; if(x < x0) x0 = x; if(x > x1) x1 = x; if(y < y0) y0 = y; if(y > y1) y1 = y; }
+  }
+  if(!found) return '';
+  const pad = 6; x0 = Math.max(0, x0-pad); y0 = Math.max(0, y0-pad); x1 = Math.min(cv.width-1, x1+pad); y1 = Math.min(cv.height-1, y1+pad);
+  const out = document.createElement('canvas'); out.width = x1-x0+1; out.height = y1-y0+1;
+  out.getContext('2d').drawImage(cv, x0, y0, out.width, out.height, 0, 0, out.width, out.height);
+  return out.toDataURL('image/png');
+}
+function sigUseDrawn(){
+  const name = (document.getElementById('sigName').value || '').trim();
+  if(!name){ alert('Enter the name that should appear on the drawing.'); return; }
+  if(!_padDirty){ alert('Nothing drawn yet.'); return; }
+  const url = trimmedSignature(_pad);
+  if(!url){ alert('Nothing drawn yet.'); return; }
+  if(document.getElementById('sigRemember').checked){
+    const all = loadSigs().filter(s => s.name !== name); all.push({ name: name, url: url }); saveSigs(all);
+  }
+  applySignature(url, name); closeModal('sigModal');
+}
+function renderSavedSigs(){
+  const ul = document.getElementById('savedSigList'), all = loadSigs();
+  if(!all.length){ ul.innerHTML = '<li><span class="nm">No signature saved on this device yet. Draw one on the Draw tab.</span></li>'; return; }
+  ul.innerHTML = all.map((s, i) => '<li><img src="' + s.url + '" alt=""><span class="nm">' + escapeHtml(s.name) + '</span>' +
+    '<button onclick="useSavedSig(' + i + ')">Use</button><button onclick="deleteSavedSig(' + i + ')">Delete</button></li>').join('');
+}
+function useSavedSig(i){ const s = loadSigs()[i]; if(s){ applySignature(s.url, s.name); closeModal('sigModal'); } }
+function deleteSavedSig(i){ const all = loadSigs(); if(!confirm('Delete the saved signature for ' + all[i].name + '?')) return; all.splice(i, 1); saveSigs(all); renderSavedSigs(); }
+
+/* ================= Verify & Save ================= */
+async function verifyAndSave(){
+  if(!hasSignature()){ alert('Tap Sign on the Verified By line first.'); return; }
+  const name = SIGNED.name;
+  const pin = await askPin(name);
+  if(pin === null) return;
+  const btn = document.getElementById('btnVerifySave');
+  btn.disabled = true; btn.textContent = 'Saving\u2026';
+  const c = document.createElement('canvas'); c.width = PHOTO.w; c.height = PHOTO.h;
+  drawComposite(c.getContext('2d'), PHOTO.w, PHOTO.h);
+  const dataUrl = c.toDataURL('image/jpeg', 0.88);
+  const url = loadSettings().scriptUrl;
+  try{
+    await fetch(url, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'verify', rowNum: VERIFY_ROW, verifiedBy: name, verifiedDate: SIGNED_DATE, pin: pin,
+                             screenshot: dataUrl, capturedAt: stampNow(), formName: FORM_NAME }) });
+  }catch(e){}
+  const ok = await pollVerified(url, VERIFY_ROW, 8);
+  btn.disabled = false; btn.textContent = 'Verify & Save';
+  if(ok){ alert('\u2705 Verified. The signed drawing has replaced the unsigned photo on Drive.'); if(window.qcInApp && qcInApp()) qcBackToList(); else location.replace(location.pathname); }
+  else alert('\u26a0\ufe0f Sent, but the server did not confirm in time. Re-open the Verify list in a minute to check before signing again.');
+}
+async function pollVerified(url, rowNum, tries){
+  for(let i = 0; i < tries; i++){
+    await new Promise(r => setTimeout(r, 2000));
+    try{ const j = await (await fetch(withQuery(url, 'action=status&rowNum=' + rowNum))).json(); if(j && j.status && /verified/i.test(j.status)) return true; }catch(e){}
+  }
+  return false;
+}
+
+/* ================= Supervisor PIN ================= */
+let _pinResolve = null;
+function askPin(name){
+  return new Promise(resolve => {
+    _pinResolve = resolve;
+    document.getElementById('pinWho').textContent = name;
+    document.getElementById('pinInput').value = '';
+    const err = document.getElementById('pinErr'); err.style.display = 'none'; err.textContent = '';
+    document.getElementById('pinModal').classList.add('show');
+    setTimeout(() => document.getElementById('pinInput').focus(), 80);
+  });
+}
+function closePin(){ closeModal('pinModal'); if(_pinResolve){ _pinResolve(null); _pinResolve = null; } }
+function pinError(msg){ const err = document.getElementById('pinErr'); err.textContent = msg; err.style.display = 'block'; const i = document.getElementById('pinInput'); i.value = ''; i.focus(); }
+async function submitPin(){
+  const pin = document.getElementById('pinInput').value.trim();
+  const name = document.getElementById('pinWho').textContent;
+  const btn = document.querySelector('#pinModal .btn-primary');
+  btn.disabled = true; btn.textContent = 'Checking\u2026';
+  let res = null;
+  try{
+    res = await (await fetch(withQuery(loadSettings().scriptUrl, 'action=checkpin&rowNum=' + encodeURIComponent(VERIFY_ROW || '') +
+      '&name=' + encodeURIComponent(name) + '&pin=' + encodeURIComponent(pin)))).json();
+  }catch(e){ res = { ok:false, reason:'Could not reach the server. Check the connection.' }; }
+  btn.disabled = false; btn.textContent = 'Confirm';
+  if(res && res.ok){ closeModal('pinModal'); if(_pinResolve){ _pinResolve(pin); _pinResolve = null; } }
+  else pinError((res && res.reason) || 'Not allowed.');
+}
+
+/* ================= Opened from QC_Verify_Hub with #verify=<row> ================= */
+function autoOpenVerifyFromUrl(){
+  const m = String(location.hash || '').match(/[#&]verify=(\d+)/) || String(location.search || '').match(/[?&]verify=(\d+)/);
+  if(!m) return;
+  document.getElementById('chipSync').textContent = 'Loading row ' + m[1] + '\u2026';
+  loadForVerify(Number(m[1]));
+}
+
+/* ================= Init ================= */
+document.getElementById('f_date').valueAsDate = new Date();
+document.getElementById('f_smp').value = '1';
+updateChips();
+autoOpenVerifyFromUrl();
+</script>
+</body>
+</html>

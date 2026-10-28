@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QC Verify — pending verification</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0E5C4A">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
+<style>
+  :root{ --ink:#111; --line:#c9c9c9; --muted:#666; --amber:#e8a13a; --red:#c0392b; --green:#1e7a46; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:#f2f2f2; font-family:Arial, Helvetica, sans-serif; color:var(--ink); }
+  .statusbar{
+    position:sticky; top:0; z-index:20; background:#1c1c1c; color:#fff;
+    display:flex; align-items:center; gap:10px; padding:9px 14px; font-size:12.5px;
+  }
+  .statusbar b{ font-size:13.5px; letter-spacing:.3px; }
+  .statusbar .chip{ background:#333; border-radius:10px; padding:3px 9px; white-space:nowrap; }
+  .statusbar .chip.ok{ background:var(--green); }
+  .statusbar .chip.warn{ background:#b7791f; }
+  .statusbar .chip.bad{ background:var(--red); }
+  .statusbar .spacer{ flex:1; }
+  .statusbar button{
+    background:#333; color:#fff; border:1px solid #555; border-radius:4px;
+    padding:4px 10px; font-size:12px; cursor:pointer;
+  }
+  .statusbar button:hover{ background:#444; }
+  .wrap{ max-width:1000px; margin:18px auto 60px; padding:0 14px; }
+  h1{ font-size:18px; margin:0 0 3px; font-weight:bold; }
+  .sub{ font-size:12.5px; color:var(--muted); margin:0 0 16px; }
+  .card{ background:#fff; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  .row{
+    display:flex; align-items:center; gap:14px; padding:12px 14px;
+    border-bottom:1px solid #e6e6e6;
+  }
+  .row:last-child{ border-bottom:none; }
+  .row:hover{ background:#fafafa; }
+  .row .main{ flex:1; min-width:0; }
+  .row .t1{ font-size:14px; font-weight:bold; margin:0; }
+  .row .t2{ font-size:12px; color:var(--muted); margin:3px 0 0; }
+  .age{ font-size:11.5px; padding:3px 9px; border-radius:10px; white-space:nowrap; }
+  .age.new{ background:#e7f3ec; color:var(--green); }
+  .age.old{ background:#fdf1de; color:#8a5a10; }
+  .age.late{ background:#fbeaea; color:var(--red); }
+  .open{
+    background:var(--amber); color:#3a2600; border:none; border-radius:5px;
+    padding:8px 18px; font-size:13px; font-weight:bold; cursor:pointer; white-space:nowrap;
+  }
+  .open:hover{ filter:brightness(1.06); }
+  .open:disabled{ background:#ddd; color:#888; cursor:not-allowed; }
+  .empty{ padding:34px 14px; text-align:center; color:var(--muted); font-size:13.5px; }
+  .err{ padding:20px 14px; color:var(--red); font-size:13px; }
+  .note{ font-size:11.5px; color:var(--muted); margin:14px 2px 0; line-height:1.6; }
+  .modal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:60;
+    align-items:center; justify-content:center; }
+  .modal.show{ display:flex; }
+  .modal .box{ background:#fff; border-radius:6px; padding:16px; width:94%; max-width:520px; }
+  .modal h3{ margin:0 0 10px; font-size:15px; }
+  .modal input{ width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:12.5px; }
+  .modal .acts{ display:flex; gap:8px; margin-top:12px; }
+  .modal .acts button{ flex:1; padding:9px; border:none; border-radius:4px; font-weight:bold; cursor:pointer; }
+  .modal .acts .save{ background:var(--amber); }
+  .modal .acts .cancel{ background:#eee; }
+</style>
+</head>
+<body>
+
+<div class="statusbar">
+  <b>QC VERIFY</b>
+  <span class="chip" id="chipCount">loading…</span>
+  <span class="chip" id="chipState">connecting…</span>
+  <span class="spacer"></span>
+  <button onclick="load()">Refresh</button>
+  <button onclick="openSettings()">&#9881;</button>
+</div>
+
+<div class="wrap">
+  <h1>Pending verification</h1>
+  <p class="sub" id="sub">Records submitted by QC and waiting for a supervisor signature.</p>
+  <div class="card" id="list"><div class="empty">Loading…</div></div>
+  <p class="note" id="howto">
+    Click <b>Open</b> and the correct inspection form opens with that record already loaded and locked.
+    Sign it, press <b>Verify &amp; Save</b>, then come back to this tab and it will refresh by itself.<br>
+    This page must be opened from the same folder as the form files.
+  </p>
+</div>
+
+<div class="modal" id="setModal">
+  <div class="box">
+    <h3>Sync endpoint</h3>
+    <input type="text" id="setUrl" placeholder="https://script.google.com/macros/s/.../exec">
+    <div class="acts">
+      <button class="save" onclick="saveSettings()">Save</button>
+      <button class="cancel" onclick="closeSettings()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwYz5hw_8wfAMPlohKF-yQnEWKA8c1pzg7ELBgkPLw8_oPVcGFC59VRSlRzF5iAc3SCjA/exec';
+const SETTINGS_KEY = 'qc_form_settings_v1';
+
+/* Form Name recorded in the sheet  ->  the file that draws that form.
+   Add a line here whenever a new inspection form is added to the folder. */
+const FORM_FILES = {
+  "QF-QC-002(B) 2in1 DRB": "2_IN_1-DRB-R15.html",
+  "QF-QC-002(B) 2in1 Joint Bracket": "2_IN_1-Joint_Bracket-R3.html",
+  "QF-QC-002(B) 2in1 Upright": "2_IN_1-Upright-R9.html",
+  "QF-QC-002(B) 2in1/CR Metal Shelve": "2_IN_1___Color_Rack-Metal_Shelve-R12.html",
+  "QF-QC-002(B) 2in1 Rack Set": "2_IN_1_Rack_Set-R4.html",
+  "QF-QC-002(B) 60 Post Packaging": "60_Post_Packaging-R0.html",
+  "QF-QC-002(B) Arylic Panel": "Acrylic_Panel-R0.html",
+  "QF-QC-002(B) Angle Post": "Angle_Post-R2.html",
+  "QF-QC-002(B) Axle Bracket Beam": "Axle_Bracket_Beam-R4.html",
+  "QF-QC-002(B) Axle Bracket Pipe": "Axle_Bracket_Pipe-R0.html",
+  "QF-QC-002(B) Back Panel": "Back_Panel-R1.html",
+  "QF-QC-002(B) Backstopper (Double) SHS 50x50x1.5 2700CE": "Backstopper__Double__SHS_50x50x1_5_2700CE-R0.html",
+  "QF-QC-002(B) Backstopper (Shared) SHS 50x50x1.5 CE": "Backstopper__Shared__SHS_50x50x1_5_CE-R0.html",
+  "QF-QC-002(B) Backstopper (Single) SHS 50x50x1.5 2700CE": "Backstopper__Single__SHS_50x50x1_5_2700CE-R0.html",
+  "QF-QC-002(B) Baseplate CR18-100": "Baseplate_CR18-100-R1.html",
+  "QF-QC-002(B) Baseplate CR18-120": "Baseplate_CR18-120-R0.html",
+  "QF-QC-002(B) Baseplate CR18-90 D180022-111-00A": "Baseplate_CR18-90-R1.html",
+  "QF-QC-002(B) Batch Panel Mail Box Moulding": "Batch_Panel_Mail_Box_Moulding-R0.html",
+  "QF-QC-002(B) Bottom Panel": "Bottom_Panel-R1.html",
+  "QF-QC-002(B) Center Deck Support": "Center_Deck_Support-R3.html",
+  "QF-QC-002(B) Coil": "Coil-R0.html",
+  "QF-QC-002(B) Color-Piccolo Rack Set": "Color___Piccolo_Rack_Set-R5.html",
+  "QF-QC-002(B) CR Bracket": "Color_rack-Bracket-R8.html",
+  "QF-QC-002(B) CR DRB": "Color_rack-DRB-R18.html",
+  "QF-QC-002(B) CR Upright": "Color_rack-Upright-R13.html",
+  "QF-QC-002(B) Column Guard C18/90_100 BTM BM H300 (D230022-703-00)": "Column_Guard_C18_90_100_BTM_BM_H300__D230022-703-00_-R1.html",
+  "QF-QC-002(B) Column Guard C18/90_100 BTM BM H300 (PHS0047-M-001)": "Column_Guard_C18_90_100_BTM_BM_H300__PHS0047-M-001_-R0.html",
+  "QF-QC-002(B) Column Guard C18/90_100 H250": "Column_Guard_C18_90_100_H250-R0.html",
+  "QF-QC-002(B) Column Guard C18/90_100 H300": "Column_Guard_C18_90_100_H300-R0.html",
+  "QF-QC-002(B) CR18-100 Base Plate (W250 x D125 X H144)": "CR18-100_Base_Plate__W250_x_D125_X_H144_.html",
+  "QF-QC-002(B) CR18 -Baseplate MOVO UPright P100": "CR18_-Baseplate_MOVO_UPright_P100-R0.html",
+  "QF-QC-002(B) Shim Plate CR18 -Baseplate MOVO UPright P100": "CR18_-Shim_Plate_Baseplate_MOVO_UPright_P100-R0.html",
+  "QF-QC-002(B) CR18 90 Back Splice": "CR18_90_Back_Splice-R0.html",
+  "QF-QC-002(B) CR18 90 Front Splice": "CR18_90_Front_Splice-R0.html",
+  "QF-QC-002(B) CR18 Movo Base Plate 100": "CR18_Movo_Base_Plate_100-R0.html",
+  "QF-QC-002(B) Deck Support": "Deck_Support-R2.html",
+  "QF-QC-002(B) Divider Panel Mail Box Moulding": "Divider_Panel_Mail_Box_Moulding-R0.html",
+  "QF-QC-002(B) Double Rivet Beam": "Double_Rivet_Beam-R6.html",
+  "QF-QC-002(B) DR Beam Kit Packaging": "Double_Rivet_Beam_Kit_Packaging-R1.html",
+  "QF-QC-002(B) Double Rivet Channel Beam": "Double_Rivet_Channel_Beam-R3.html",
+  "QF-QC-002(B) Double Rivet Z Beam": "Double_Rivet_Z_Beam-R6.html",
+  "QF-QC-002(B) DR Z Beam Support": "Double_Rivet_Z_Beam_Support-R2.html",
+  "QF-QC-002(B) EN60 -HD Baseplate 160x160x6mmT- 4 holes": "EN60-HD_Baseplate_160x160x6mmT-_4_holes-_R0.html",
+  "QF-QC-002(B) EN76-100 HD Baseplate 6x160x180mm": "EN76-100_HD_Baseplate_6x160x180mm_-R0.html",
+  "QF-QC-002(B) End Connector": "End_Connector-R3.html",
+  "QF-QC-002(B) Flip Panel": "Flip_Panel-R1.html",
+  "QF-QC-002(B) Front Panel": "Front_Panel-R1.html",
+  "QF-QC-002(B) AM Base Plate": "HD_Base_Plate-R0.html",
+  "QF-QC-002(B) AM Box Beam 40x100": "HD_Box_Beam_N100x40-R1.html",
+  "QF-QC-002(B) AM Bracing": "HD_Bracing-R1.html",
+  "QF-QC-002(B) AM End Connector": "HD_End_Connector-R1.html",
+  "QF-QC-002(B) AM Endframe Full Set": "HD_Endframe_Full_Set-R1.html",
+  "QF-QC-002(B) HD Shelving Steel Deck": "Hd_Shelving_Steel_Deck-R1.html",
+  "QF-QC-002(B) HD Shelving Steel Deck Packaging": "Hd_Shelving_Steel_Deck_Packaging-R0.html",
+  "QF-QC-002(B) AM Support Beam": "HD_Support_Beam-R0.html",
+  "QF-QC-002(B) AM Support Beam (Welding)": "HD_Support_Beam_Welding-R0.html",
+  "QF-QC-002(B) AM Upright 2150mm 2450mm": "HD_Upright-R1.html",
+  "QF-QC-002(B) Left Side Panel": "Left_Side_Panel-R1.html",
+  "QF-QC-002(B) CTS Single Rivet": "Light_Duty-CTS_single_rivet-R18.html",
+  "QF-QC-002(B) DRB Front & Side Brace": "Light_Duty-DRB_Front_and_side_brace__C_Butterfly_-R18.html",
+  "QF-QC-002(B) LD Upright": "Light_Duty-Upright-R18.html",
+  "QF-QC-002(B) Medium Duty AM Racking Set Packaging": "MD_Am_Racking_Set_Packaging-R0.html",
+  "QF-QC-002(B) MD Divider": "MD_Divider-R1.html",
+  "QF-QC-002(B) MD Front / Side Brace": "MD_Front___Side_Brace-R1.html",
+  "QF-QC-002(B) MD L Upright 1.5x38x38": "MD_L_Upright-R0.html",
+  "QF-QC-002(B) MD T Upright 1.5": "MD_T_Upright-R0.html",
+  "QF-QC-002(B) Bending MS 20mm": "Metal_Shelve-Bending_20mm-R1.html",
+  "QF-QC-002(B) Bending MS 25mm": "Metal_Shelve-Bending_normal_25mm-R2.html",
+  "QF-QC-002(B) Metal Shelve Cap": "Metal_Shelve-Cap-R8.html",
+  "QF-QC-002(B) Modular Bar Stack Rack": "Modular_Bar_Stack_Rack-R3.html",
+  "QF-QC-002(B) Modular Bottom Bending Bar": "Modular_Bar_Stack_Rack__Bottom_Bending_Bar_-R0.html",
+  "QF-QC-002(B) Modular Side Bending Bar": "Modular_Bar_Stack_Rack__Side_Bending_Bar_-R0.html",
+  "QF-QC-002(B) Modular Bar Rack Pkg": "Modular_Bar_Stack_Rack_Packaging-R2.html",
+  "QF-QC-002(B) Mona Center Support": "Mona_New-_Center_Support-R1.html",
+  "QF-QC-002(B) Mona Drz Upright 38x38": "Mona_New-_Z_Rivet_Upright_38x38mm-R0.html",
+  "QF-QC-002(B) Mona DRZ Rivet": "Mona_New-Z_Beam_DRZ_Rivet-R7.html",
+  "QF-QC-002(B) Mona DRZ Rivet w/ hole": "Mona_New-Z_Beam_DRZ_Rivet_with_hole-R2.html",
+  "QF-QC-002(B) Mona Each Packaging": "Mona_New_Jaken_Packaging_-_Each_Packaging__New_-R0.html",
+  "QF-QC-002(B) Mona New Packaging R5": "Mona_New_Jaken_Packaging__New_-R5.html",
+  "QF-QC-002(B) Mona Old Packaging R6": "Mona_New_Jaken_Packaging__Old_-R6.html",
+  "QF-QC-002(B) Mona Packaging R0": "Mona_New_Packaging-R0.html",
+  "QF-QC-002(B) Mona S DRB Rivet": "Mona_New_S-DRB_Rivet-R1.html",
+  "QF-QC-002(B) Mona S Upright": "Mona_New_S-Upright-R2.html",
+  "QF-QC-002(B) Mona Rack Set": "Mona_Rack_Set-R0.html",
+  "QF-QC-002(B) MS Plate 150x110x5mmT": "MS_Plate_150x110x5mmT-R0.html",
+  "QF-QC-002(B) MS Plate 50x110x5mmT": "MS_Plate_50x110x5mmT-R0.html",
+  "QF-QC-002(B) Parcel Box Assembly": "Parcel_Box_Assembly-R0.html",
+  "QF-QC-002(B) Portable Stack Rack": "Portable_Stack_Rack-R4.html",
+  "QF-QC-002(B) Portable Stack Rack Pkg": "Portable_Stack_Rack_Packaging-R3.html",
+  "QF-QC-002(B) Portable Stack Rack Post": "Portable_Stack_Rack_Post-R0.html",
+  "QF-QC-002(B) QC Coating Inspection": "QC_Coating_Inspection_Form-R3.html",
+  "QF-QC-002(B) QC Coating Inspection Form -R3": "QC_Coating_Inspection_Form-R3.html",
+  "QF-QC-020 Pre-inspection Form -R1": "QF-QC-020_Pre-inspection_Form-R1.html",
+  "QF-QC-002(B) Reenforce Shelving 24mm": "Reenforce_Shelving_24mm-R5.html",
+  "QF-QC-002(B) Right Side Panel": "Right_Side_Panel-R1.html",
+  "QF-QC-002(B) Rivet Lock Packaging": "Rivel_Lock_Packaging-R2.html",
+  "QF-QC-002(B) Rivet Lock Set Packaging": "Rivel_Lock_Set_Packaging-R1.html",
+  "QF-QC-002(B) Axle Bracket Kit Pkg": "Rivet_Lock_Axle_Bracket_Kit_Packaging-R2.html",
+  "QF-QC-002(B) Rivet Lock Dolly Base - Caster Bracket / Hollow Pipe": "Rivet_Lock_Dolly_Base-Caster___Hollow_Pipe-R0.html",
+  "QF-QC-002(B) Rivet Lock Dolly Base - Upright Bracket / Full Set": "Rivet_Lock_Dolly_Base-Upright_Bracket___Full_Set-R1.html",
+  "QF-QC-002(B) Dolly Base Packaging": "Rivet_Lock_Dolly_Base_Packaging-R0.html",
+  "QF-QC-002(B) S23 Welded Upright Post": "S23_Welded_Upright_Post-R1.html",
+  "QF-QC-002(B) S23 Welded Upright Post - Base Plate / Welding": "S23_Welded_Upright_Post_-_Base_Plate___Welding-R0.html",
+  "QF-QC-002(B) S23 Z Beam": "S23_Z_Beam-R3.html",
+  "QF-QC-002(B) Single Rivet Beam": "Single_Rivet_Beam-R2.html",
+  "QF-QC-002(B) Steel Decking Panel": "Steel_Decking_Panel-R1.html",
+  "QF-QC-002(B) Steel Decking Panel Pkg": "Steel_Decking_Panel_Packaging-R1.html",
+  "QF-QC-002(B) Straighterner 722mm": "Straighterner_722mm-R0.html",
+  "QF-QC-002(B) Sys 23 Packaging": "Sys_23_Packaging-R5.html",
+  "QF-QC-002(B) T Post": "T_Post-R5.html",
+  "QF-QC-002(B) Tie Plate": "Tie_Plate-R2.html",
+  "QF-QC-002(B) Top Panel": "Top_Panel-R1.html",
+  "QF-QC-002(B) Upright Post Crossbar": "Upright_Post_Crossbar-R3.html",
+  "QF-QC-002(B) Wall Mount": "Wall_Mount-R2.html",
+
+  /* --- Gondola / Column Guard forms --- */
+  "QF-QC-002(B) 2in1/CR Metal Shelve": "2_IN_1___Color_Rack-Metal_Shelve-R12.html",
+  "QF-QC-002(B) Column Guard C18/90-100 BTM BM (DD) H300": "Column_Guard_C18_90-100_BTM_BM__DD__H300-R0.html",
+  "QF-QC-002(B) Column Guard C18 90/100 BTM BM (DD) H250": "Column_Guard_C18_90_100_BTM_BM__DD__H250-R0.html",
+  "QF-QC-002(B) GDL Back Netting": "GDL_Back_Netting-R0.html",
+  "QF-QC-002(B) GDL Back Panel": "GDL_Back_Panel-R0.html",
+  "QF-QC-002(B) Drawing Check": "Drawing_Check.html",
+  "QF-QC-002(B) GDL Back Panel (Turret Punch) - Hole": "GDL_Back_Panel_Hole-R0.html",
+  "QF-QC-002(B) GDL Bottom Arm L & R": "GDL_Bottom_Arm_L_R-R1.html",
+  "QF-QC-002(B) GDL Shelving 0.7": "GDL_Shelving-R0.html",
+  "QF-QC-002(B) Mona Old Packaging R7": "Mona_New_Jaken_Packaging__Old_-R7.html",
+  "QF-QC-002(B) GDL Back Panel 250": "GDL_Back_Panel_250-R0.html",
+  "QF-QC-002(B) GDL Back Panel 250 (Turret Punch) - Hole": "GDL_Back_Panel_250__Turret_Punch__-_Hole-R0.html",
+  "QF-QC-002(B) GDL Back Panel 300": "GDL_Back_Panel_300-R0.html",
+  "QF-QC-002(B) GDL Back Panel 300 (Turret Punch) - Hole": "GDL_Back_Panel_300__Turret_Punch__-_Hole-R0.html",
+  "QF-QC-002(B) GDL Kick Plate 0.4": "GDL_Kick_Plate_0_4-R0.html",
+  "QF-QC-002(B) GDL Kick Plate 0.8": "GDL_Kick_Plate_0_8-R0.html",
+  "QF-QC-002(B) GDL LD Bracket Bottom Arm": "GDL_LD_Bracket_Bottom_Arm-R0.html",
+  "QF-QC-002(B) GDL LD Post Base Plate 30 x 60": "GDL_LD_Post_Base_Plate_30_x_60-R0.html",
+  "QF-QC-002(B) GDL LD Top Cover": "GDL_LD_Top_Cover-R0.html",
+  "QF-QC-002(B) GDL MD Bracket Bottom Arm": "GDL_MD_Bracket_Bottom_Arm-R1.html",
+  "QF-QC-002(B) GDL MD Post Base Plate 30 x 80": "GDL_MD_Post_Base_Plate_30_x_80-R0.html",
+  "QF-QC-002(B) GDL MD Top Cover": "GDL_MD_Top_Cover-R0.html",
+  "QF-QC-002(B) GDL Netting Hook D/S Left and Right": "GDL_Netting_Hook_D_S_Left_and_Right-R0.html",
+  "QF-QC-002(B) GDL Netting Hook S/S Left and Right": "GDL_Netting_Hook_S_S_Left_and_Right-R0.html",
+  "QF-QC-002(B) GDL Post 30 x 60": "GDL_Post_30_x_60-R1.html",
+  "QF-QC-002(B) GDL Shelf Bracket": "GDL_Shelf_Bracket-R0.html",
+  "QF-QC-002(B) GDL Support 0.6": "GDL_Support_0_6-R0.html",
+  "QF-QC-002(B) GDL Support 0.8": "GDL_Support_0_8-R0.html",
+  "QF-QC-002(B) Bending MS 25mm": "Metal_Shelve-Bending_normal_25mm-R2.html",
+  "QF-QC-002(B) Mona Center Support": "Mona_New-_Center_Support-R1.html",
+  "QF-QC-002(B) Mona S DRB Rivet": "Mona_New_S-DRB_Rivet-R1.html"
+};
+
+function safeGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function safeSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function loadSettings(){
+  try{
+    const s = JSON.parse(safeGet(SETTINGS_KEY) || '{}');
+    if(!s.scriptUrl) s.scriptUrl = DEFAULT_SCRIPT_URL;
+    return s;
+  }catch(e){ return { scriptUrl: DEFAULT_SCRIPT_URL }; }
+}
+function openSettings(){
+  document.getElementById('setUrl').value = loadSettings().scriptUrl || '';
+  document.getElementById('setModal').classList.add('show');
+}
+function closeSettings(){ document.getElementById('setModal').classList.remove('show'); }
+function saveSettings(){
+  const s = loadSettings();
+  s.scriptUrl = document.getElementById('setUrl').value.trim();
+  safeSet(SETTINGS_KEY, JSON.stringify(s));
+  closeSettings(); load();
+}
+
+function esc(s){
+  return String(s === null || s === undefined ? '' : s)
+    .replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* The sheet may hand back either 2026-08-05 or 05/08/2026 depending on how
+   Sheets stored the cell, so accept both. */
+function parseDate(v){
+  if(!v) return null;
+  const s = String(v).trim();
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return new Date(+m[1], +m[2]-1, +m[3]);
+  m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(m) return new Date(+m[3], +m[2]-1, +m[1]);
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
+}
+function ageInfo(v){
+  const d = parseDate(v);
+  if(!d) return { days: -1, label: '\u2014', cls: 'old' };
+  const today = new Date(); today.setHours(0,0,0,0); d.setHours(0,0,0,0);
+  const days = Math.round((today - d) / 86400000);
+  if(days <= 0) return { days: 0, label: 'today', cls: 'new' };
+  if(days === 1) return { days: 1, label: '1 day', cls: 'new' };
+  return { days: days, label: days + ' days', cls: days >= 4 ? 'late' : 'old' };
+}
+function shortForm(name){
+  return String(name || '').replace(/^QF-QC-002\(B\)\s*/, '').replace(/^QF-QC-020\s*/, 'QF-QC-020 ');
+}
+
+let RECORDS = [];
+
+async function load(){
+  const s = loadSettings();
+  const list = document.getElementById('list');
+  const chipState = document.getElementById('chipState');
+  const chipCount = document.getElementById('chipCount');
+  chipState.textContent = 'loading\u2026'; chipState.className = 'chip';
+  if(!s.scriptUrl){
+    list.innerHTML = '<div class="err">No sync endpoint set. Click the \u2699 button.</div>';
+    return;
+  }
+  try{
+    const url = s.scriptUrl + (s.scriptUrl.indexOf('?') >= 0 ? '&' : '?') + 'action=list&_ts=' + Date.now();
+    const r = await fetch(url);
+    const j = await r.json();
+    RECORDS = (j && j.records) || [];
+    RECORDS.sort((a,b) => (ageInfo(b.date).days) - (ageInfo(a.date).days));
+    render();
+    chipState.textContent = 'connected'; chipState.className = 'chip ok';
+    const forms = new Set(RECORDS.map(x => x.formName));
+    chipCount.textContent = RECORDS.length + ' pending';
+    document.getElementById('sub').textContent = RECORDS.length
+      ? RECORDS.length + ' record(s) across ' + forms.size + ' form(s), oldest first.'
+      : 'Records submitted by QC and waiting for a supervisor signature.';
+  }catch(e){
+    chipState.textContent = 'offline'; chipState.className = 'chip bad';
+    chipCount.textContent = '\u2014';
+    list.innerHTML = '<div class="err">Could not reach the server. Check the network and press Refresh.</div>';
+  }
+}
+
+function render(){
+  const list = document.getElementById('list');
+  if(!RECORDS.length){
+    list.innerHTML = '<div class="empty">Nothing is waiting for verification.</div>';
+    return;
+  }
+  list.innerHTML = RECORDS.map((rec, i) => {
+    const a = ageInfo(rec.date);
+    const file = FORM_FILES[rec.formName];
+    const title = (rec.jobOrder ? esc(rec.jobOrder) : '(no job order)') +
+                  (rec.description ? ' \u00b7 ' + esc(rec.description) : '') +
+                  (rec.size ? ' \u00b7 ' + esc(rec.size) : '');
+    const meta = [rec.date ? esc(rec.date) : '', rec.inspector ? esc(rec.inspector) : '',
+                  esc(shortForm(rec.formName))].filter(Boolean).join(' \u00b7 ');
+    const btn = file
+      ? '<button class="open" onclick="openRecord(' + i + ')">Open</button>'
+      : '<button class="open" disabled title="No matching file in this folder">Missing file</button>';
+    return '<div class="row"><div class="main"><p class="t1">' + title + '</p>' +
+           '<p class="t2">' + meta + '</p></div>' +
+           '<span class="age ' + a.cls + '">' + a.label + '</span>' + btn + '</div>';
+  }).join('');
+}
+
+const IS_INSTALLED_APP = location.protocol === 'https:' &&
+  ((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true);
+if(location.protocol === 'https:' && 'serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(function(){});
+}
+
+if(IS_INSTALLED_APP){
+  var howto = document.getElementById('howto');
+  if(howto) howto.innerHTML = 'Tap <b>Open</b>: the form opens with that record already loaded and locked. ' +
+    'Sign it and press <b>Verify &amp; Save</b>. You come back to this list by yourself; ' +
+    'to leave a form without signing, press <b>Exit</b> or the Back button.';
+}
+
+function openRecord(i){
+  const rec = RECORDS[i];
+  const file = FORM_FILES[rec.formName];
+  if(!file){
+    alert('No form file matches "' + rec.formName + '" in this folder.\n\n' +
+          'Copy that form next to this page, or add it to FORM_FILES.');
+    return;
+  }
+  const target = encodeURI(file) + '#verify=' + rec.rowNum;   /* # not ? — UNC paths reject a query */
+  /* Installed tablet app (GitHub Pages): open the form inside the app window;
+     the tablet's Back button returns here. Laptop (file share): new window, as before. */
+  if(IS_INSTALLED_APP){ location.href = target; return; }
+  const w = window.open(target, '_blank');
+  if(!w) location.href = target;      /* popup blocked \u2192 same tab */
+}
+
+/* Coming back from a form is the moment the list is most likely stale, so
+   refresh on every way a tab can become current again, plus a slow poll. */
+let _last = 0;
+function refreshIfStale(){
+  const now = Date.now();
+  if(now - _last < 1500) return;       /* the events overlap; debounce them */
+  _last = now; load();
+}
+window.addEventListener('focus', refreshIfStale);
+window.addEventListener('pageshow', refreshIfStale);
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible') refreshIfStale();
+});
+setInterval(() => { if(document.visibilityState === 'visible') load(); }, 30000);
+refreshIfStale();
+</script>
+</body>
+</html>
