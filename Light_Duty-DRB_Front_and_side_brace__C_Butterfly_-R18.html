@@ -288,6 +288,7 @@
   .modal-box label.rmb{ display:flex; align-items:center; gap:6px; font-size:11.5px;
     color:#444; margin-top:8px; }
 </style>
+<style id="qc-no-pull-refresh">html, body{ overscroll-behavior-y: contain; }   /* no reload when the page is dragged down from the top */</style>
 </head>
 <body>
 
@@ -901,6 +902,9 @@ function sendToServer(url, payload){
       fetch(getUrl)
         .then(function(r){ return r.json(); })
         .then(function(json){
+          /* Only a real answer from the Inbox (ok + row number) counts as sent.
+             An error page, a sign-in page or no answer is NOT a submit. */
+          if(!(json && (json.ok === true || json.status === 'ok') && json.rowNum)){ resolve(false); return; }
           resolve(true);  /* Phase 1 done — show ✅ */
 
           /* ── Phase 2: screenshot via POST, best-effort in background ── */
@@ -924,20 +928,9 @@ function sendToServer(url, payload){
           }
         })
         .catch(function(){
-          /*
-           * fetch() failed — this happens on some browsers when the HTML
-           * file is opened from a USB drive or strict local file:// path.
-           * Fall back to a hidden img tag which always works (GET only,
-           * no CORS check, no response reading — just fires and forgets).
-           * Screenshot will be skipped in this case.
-           */
-          const img = document.createElement('img');
-          img.style.display = 'none';
-          document.body.appendChild(img);
-          const timer = setTimeout(function(){ resolve(false); }, 10000);
-          img.onload  = function(){ clearTimeout(timer); resolve(true); };
-          img.onerror = function(){ clearTimeout(timer); resolve(true); };
-          img.src = getUrl;
+          /* No usable answer from the Inbox. The old hidden-image fallback was
+             removed: it reported "Submitted" even when nothing reached the sheet. */
+          resolve(false);
         });
 
     } catch(e) {
@@ -1009,9 +1002,9 @@ function submitRecord(){
         qcSubmitted();
         alert('✅ Submitted to Google Sheet.');
       } else {
-        queueSubmission(payload);
-        qcSubmitted();   /* queued records sync by themselves: never send twice */
-        alert('⚠️ Could not reach the server. This record is queued and will sync automatically when the connection is restored.');
+        /* not confirmed by the Inbox: say so plainly, keep the entries, allow Submit again */
+        qcSubmitFailed();
+        alert('\u274c NOT SENT \u2014 Google Sheet did not confirm this record, so it is NOT in the QC Submissions Inbox.\n\nYour entries are still on the screen. Check the Wi-Fi and press Submit again.\nIf it keeps failing, tell the supervisor.');
       }
     });
   }).catch(err=>{
@@ -1781,6 +1774,44 @@ autoOpenVerifyFromUrl();
   }
   document.addEventListener('input', onEdit, true);
   document.addEventListener('change', onEdit, true);
+})();
+</script>
+<script id="qc-no-refresh">
+/* Accidental refresh guard.
+   1) The page no longer reloads when it is dragged down from the top
+      (Android "pull to refresh"): see the qc-no-pull-refresh style.
+   2) If a reload or close happens another way while there are unsent
+      entries, Chrome asks "Leave site?" first. No question on an empty
+      form, after "Submitted", or while a supervisor is verifying. */
+(function(){
+  var dirty = false;
+  function skip(t){ return !t || !t.closest || t.closest('.modal, .settings-panel, #settingsPanel, .statusbar, .actionbar'); }
+  function onEdit(e){ if(!skip(e.target)) dirty = true; }
+  document.addEventListener('input',  onEdit, true);
+  document.addEventListener('change', onEdit, true);
+  function verifying(){ try{ return !!VERIFY_ROW; }catch(e){ return false; } }
+  function submitted(){
+    var c = document.getElementById('chipSync');
+    if(c && /submitted/i.test(c.textContent)) return true;
+    try{ if(DC_SUBMITTED) return true; }catch(e){}
+    return false;
+  }
+  window.addEventListener('beforeunload', function(e){
+    if(!dirty || verifying() || submitted()) return;
+    e.preventDefault(); e.returnValue = ''; return '';
+  });
+  /* a real Reset empties the form: nothing left to protect */
+  ['resetForm','resetSilently'].forEach(function(name){
+    var fn = window[name]; if(typeof fn !== 'function') return;
+    window[name] = function(){
+      var r = fn.apply(this, arguments);
+      var jo = document.getElementById('jobOrder');
+      var empty = jo ? !String(jo.value || '').trim()
+                     : (typeof window.collectRows === 'function' ? !window.collectRows().length : true);
+      if(empty) dirty = false;
+      return r;
+    };
+  });
 })();
 </script>
 </body>

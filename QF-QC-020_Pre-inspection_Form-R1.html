@@ -160,6 +160,7 @@
     body{ background:#fff; }
   }
 </style>
+<style id="qc-no-pull-refresh">html, body{ overscroll-behavior-y: contain; }   /* no reload when the page is dragged down from the top */</style>
 </head>
 <body>
 
@@ -438,6 +439,9 @@ function sendToServer(url, payload){
       fetch(getUrl)
         .then(function(r){ return r.json(); })
         .then(function(json){
+          /* Only a real answer from the Inbox (ok + row number) counts as sent.
+             An error page, a sign-in page or no answer is NOT a submit. */
+          if(!(json && (json.ok === true || json.status === 'ok') && json.rowNum)){ resolve(false); return; }
           resolve(true);  /* Phase 1 done — show ✅ */
 
           /* ── Phase 2: screenshot via POST, best-effort in background ── */
@@ -460,20 +464,9 @@ function sendToServer(url, payload){
           }
         })
         .catch(function(){
-          /*
-           * fetch() failed — this happens on some browsers when the HTML
-           * file is opened from a USB drive or strict local file:// path.
-           * Fall back to a hidden img tag which always works (GET only,
-           * no CORS check, no response reading — just fires and forgets).
-           * Screenshot will be skipped in this case.
-           */
-          const img = document.createElement('img');
-          img.style.display = 'none';
-          document.body.appendChild(img);
-          const timer = setTimeout(function(){ resolve(false); }, 10000);
-          img.onload  = function(){ clearTimeout(timer); resolve(true); };
-          img.onerror = function(){ clearTimeout(timer); resolve(true); };
-          img.src = getUrl;
+          /* No usable answer from the Inbox. The old hidden-image fallback was
+             removed: it reported "Submitted" even when nothing reached the sheet. */
+          resolve(false);
         });
 
     } catch(e) {
@@ -757,7 +750,7 @@ async function submitRecord(){
   const recordId = capturedAt + '_' + Math.random().toString(36).slice(2,8);
   const stateJson = JSON.stringify(snapshotForm());
 
-  let sent = 0, queued = 0;
+  let sent = 0, failedAt = 0;
   for(let i = 0; i < rows.length; i++){
     btn.textContent = 'SENDING ' + (i+1) + '/' + rows.length + '\u2026';
     const payload = { row: buildRecordRow(rows[i]), screenshot: shot,
@@ -765,17 +758,25 @@ async function submitRecord(){
                       recordId: recordId, state: (i === 0 ? stateJson : ''),
                       _ts: Date.now() };
     const ok = await sendToServer(s.scriptUrl, payload);
-    if(ok) sent++; else { queueSubmission(payload); queued++; }
+    if(ok) sent++; else { failedAt = i + 1; break; }   /* stop: the Inbox is not answering */
   }
 
   _submitting = false;
   btn.disabled = false; btn.textContent = 'SUBMIT';
   updateSyncChip();
-  if(sent || queued) qcSubmitted();
-  alert(queued
-    ? '\u26a0\ufe0f ' + sent + ' row(s) submitted, ' + queued +
-      ' queued \u2014 they will sync automatically when the connection is restored.'
-    : '\u2705 Submitted to Google Sheet.');
+  if(!failedAt){
+    qcSubmitted();
+    alert('\u2705 Submitted to Google Sheet.');
+  } else if(sent === 0){
+    qcSubmitFailed();
+    alert('\u274c NOT SENT \u2014 Google Sheet did not confirm this record, so it is NOT in the QC Submissions Inbox.\n\nYour entries are still on the screen. Check the Wi-Fi and press Submit again.\nIf it keeps failing, tell the supervisor.');
+  } else {
+    /* some rows are already in the sheet: never send them twice */
+    qcSubmitted();
+    var c = document.getElementById('chipSync'); if(c){ c.textContent = 'Sync: only ' + sent + ' of ' + rows.length + ' rows sent'; c.classList.remove('ok'); c.classList.add('bad'); }
+    alert('\u26a0\ufe0f Only ' + sent + ' of ' + rows.length + ' rows reached Google Sheet (rows 1\u2013' + sent + ').\n'
+        + 'Row ' + failedAt + ' onward were NOT sent.\n\nDo NOT press Submit again (rows 1\u2013' + sent + ' would be sent twice). Tell the supervisor.');
+  }
 }
 
 function resetForm(){
@@ -1335,6 +1336,44 @@ autoOpenVerifyFromUrl();
                          : (typeof window.collectRows === 'function' ? !window.collectRows().length : true);
         if(cleared) unlock();
       }
+      return r;
+    };
+  });
+})();
+</script>
+<script id="qc-no-refresh">
+/* Accidental refresh guard.
+   1) The page no longer reloads when it is dragged down from the top
+      (Android "pull to refresh"): see the qc-no-pull-refresh style.
+   2) If a reload or close happens another way while there are unsent
+      entries, Chrome asks "Leave site?" first. No question on an empty
+      form, after "Submitted", or while a supervisor is verifying. */
+(function(){
+  var dirty = false;
+  function skip(t){ return !t || !t.closest || t.closest('.modal, .settings-panel, #settingsPanel, .statusbar, .actionbar'); }
+  function onEdit(e){ if(!skip(e.target)) dirty = true; }
+  document.addEventListener('input',  onEdit, true);
+  document.addEventListener('change', onEdit, true);
+  function verifying(){ try{ return !!VERIFY_ROW; }catch(e){ return false; } }
+  function submitted(){
+    var c = document.getElementById('chipSync');
+    if(c && /submitted/i.test(c.textContent)) return true;
+    try{ if(DC_SUBMITTED) return true; }catch(e){}
+    return false;
+  }
+  window.addEventListener('beforeunload', function(e){
+    if(!dirty || verifying() || submitted()) return;
+    e.preventDefault(); e.returnValue = ''; return '';
+  });
+  /* a real Reset empties the form: nothing left to protect */
+  ['resetForm','resetSilently'].forEach(function(name){
+    var fn = window[name]; if(typeof fn !== 'function') return;
+    window[name] = function(){
+      var r = fn.apply(this, arguments);
+      var jo = document.getElementById('jobOrder');
+      var empty = jo ? !String(jo.value || '').trim()
+                     : (typeof window.collectRows === 'function' ? !window.collectRows().length : true);
+      if(empty) dirty = false;
       return r;
     };
   });

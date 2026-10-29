@@ -138,6 +138,7 @@
     @page{ size:A4; margin:0; }
   }
 </style>
+<style id="qc-no-pull-refresh">html, body{ overscroll-behavior-y: contain; }   /* no reload when the page is dragged down from the top */</style>
 </head>
 <body>
 
@@ -1029,6 +1030,44 @@ document.getElementById('f_date').valueAsDate = new Date();
 document.getElementById('f_smp').value = '1';
 updateChips();
 autoOpenVerifyFromUrl();
+</script>
+<script id="qc-no-refresh">
+/* Accidental refresh guard.
+   1) The page no longer reloads when it is dragged down from the top
+      (Android "pull to refresh"): see the qc-no-pull-refresh style.
+   2) If a reload or close happens another way while there are unsent
+      entries, Chrome asks "Leave site?" first. No question on an empty
+      form, after "Submitted", or while a supervisor is verifying. */
+(function(){
+  var dirty = false;
+  function skip(t){ return !t || !t.closest || t.closest('.modal, .settings-panel, #settingsPanel, .statusbar, .actionbar'); }
+  function onEdit(e){ if(!skip(e.target)) dirty = true; }
+  document.addEventListener('input',  onEdit, true);
+  document.addEventListener('change', onEdit, true);
+  function verifying(){ try{ return !!VERIFY_ROW; }catch(e){ return false; } }
+  function submitted(){
+    var c = document.getElementById('chipSync');
+    if(c && /submitted/i.test(c.textContent)) return true;
+    try{ if(DC_SUBMITTED) return true; }catch(e){}
+    return false;
+  }
+  window.addEventListener('beforeunload', function(e){
+    if(!dirty || verifying() || submitted()) return;
+    e.preventDefault(); e.returnValue = ''; return '';
+  });
+  /* a real Reset empties the form: nothing left to protect */
+  ['resetForm','resetSilently'].forEach(function(name){
+    var fn = window[name]; if(typeof fn !== 'function') return;
+    window[name] = function(){
+      var r = fn.apply(this, arguments);
+      var jo = document.getElementById('jobOrder');
+      var empty = jo ? !String(jo.value || '').trim()
+                     : (typeof window.collectRows === 'function' ? !window.collectRows().length : true);
+      if(empty) dirty = false;
+      return r;
+    };
+  });
+})();
 </script>
 </body>
 </html>
