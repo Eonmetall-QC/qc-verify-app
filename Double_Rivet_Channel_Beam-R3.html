@@ -387,6 +387,8 @@
       <div class="grp"><span class="lbl">Description :</span>
         <span class="desc-value-wrap">
           <span class="desc-line">Double Rivet Channel Beam</span>
+          <!-- the length / size is typed here; it goes to the sheet's Size column -->
+          <input type="text" class="fill" id="descSize" placeholder="Length / Size" autocomplete="off">
         </span>
       </div>
     </div>
@@ -911,7 +913,7 @@ function collectRow(){
     'Machine No./Tag No./Operator': document.getElementById('macTag').value,
     'Category':                     CATEGORY,
     'Description':                  descriptionValue(),
-    'Size':                         '',
+    'Size':                         (document.getElementById('descSize') || {}).value || '',
     'Qty':                          document.getElementById('lotSize').value,
     'Sample Size':                  sampleCount,
     'Acc':       res.Acc,
