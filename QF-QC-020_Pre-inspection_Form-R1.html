@@ -753,7 +753,9 @@ async function submitRecord(){
   let sent = 0, failedAt = 0;
   for(let i = 0; i < rows.length; i++){
     btn.textContent = 'SENDING ' + (i+1) + '/' + rows.length + '\u2026';
-    const payload = { row: buildRecordRow(rows[i]), screenshot: shot,
+    /* The page photo is saved ONCE per submission (with the first row). The other
+       rows share its Record ID; at Verify every row gets the signed photo's link. */
+    const payload = { row: buildRecordRow(rows[i]), screenshot: (i === 0 ? shot : ''),
                       formName: FORM_NAME, capturedAt: capturedAt,
                       recordId: recordId, state: (i === 0 ? stateJson : ''),
                       _ts: Date.now() };
