@@ -288,6 +288,59 @@
   .modal-box label.rmb{ display:flex; align-items:center; gap:6px; font-size:11.5px;
     color:#444; margin-top:8px; }
 </style>
+<style id="qc-no-pull-refresh">html, body{ overscroll-behavior-y: contain; }   /* no reload when the page is dragged down from the top */</style>
+<!-- inspector & colour lists: qc-lists.js (shared file). If it cannot be found, the copy below is used. -->
+<script src="qc-lists.js"></script>
+<script src="../qc-lists.js"></script>
+<script id="qc-lists-default">
+window.QC_LISTS_DEFAULT = {
+
+  inspectors: [
+    "DAHAMAN",
+    "IQBAL",
+    "RASHID",
+    "REZA",
+  ],
+
+  colours: [
+    "Apple Green",
+    "Beige",
+    "Black",
+    "Blue",
+    "Dim Grey",
+    "Em Silver",
+    "GI",
+    "Grey",
+    "Green",
+    "Lt Beige",
+    "Lt Grey",
+    "Lavender",
+    "Matt Red",
+    "Matt Yellow",
+    "Matt Grey",
+    "Mini Black",
+    "Mx Grey",
+    "Orange",
+    "Pink",
+    "Red",
+    "Rod Grey",
+    "Sg Beige",
+    "Sky Blue",
+    "Sand Black",
+    "Sage Green",
+    "Silver",
+    "White",
+    "Yellow",
+  ],
+
+};
+</script>
+<script id="qc-lists-cache">
+/* the last lists received from the "Lists" tab (kept on this device) come first */
+(function(){ try{ var c = JSON.parse(localStorage.getItem('qcListsLive') || 'null');
+  if(c && c.inspectors && c.inspectors.length && c.colours && c.colours.length) window.QC_LISTS = c; }catch(e){} })();
+</script>
+<style id="qc-lists-style">select.qc-list{ font:inherit; color:inherit; background:transparent; border:none; border-bottom:1px solid #000; padding:0 2px; min-width:120px; }</style>
 </head>
 <body>
 
@@ -455,6 +508,184 @@
   <button class="btn-danger"    id="btnReset"      onclick="resetForm()">Reset</button>
 </div>
 
+<script id="qc-lists-fields">
+/* Inspector and Colour lists.
+   - The lists live in the "Lists" tab of the QC Submissions Inbox. Each form
+     loads them when it opens and keeps the last copy on this device, so the
+     lists still work without a connection.
+   - "Inspected By": choose from the list only.
+   - "Color" (forms with no fixed colour): choose from the list, or
+     "Other…" to type a new colour. A "Did you mean …?" check catches typos.
+     A new colour is added to the Lists tab once the record has been
+     submitted, so every form shows it the next time it opens.
+   - The Pre-inspection form's per-row Colour / Inspected By lists follow the
+     same lists. */
+(function(){
+  var CACHE = 'qcListsLive';
+  var OTHER = '__other__';
+  var L0 = window.QC_LISTS || {}, D0 = window.QC_LISTS_DEFAULT || {};
+  var LISTS = {
+    inspectors: (L0.inspectors && L0.inspectors.length) ? L0.inspectors.slice() : (D0.inspectors || []).slice(),
+    colours:    (L0.colours    && L0.colours.length)    ? L0.colours.slice()    : (D0.colours    || []).slice()
+  };
+  function key(s){ return String(s || '').toLowerCase().replace(/[^a-z0-9-]/g, ''); }
+  function colourItems(){
+    var out = [], seen = {};
+    LISTS.colours.forEach(function(c){ c = String(c || '').trim(); var k = key(c);
+      if(c && k && !/^other/.test(k) && !seen[k]){ seen[k] = 1; out.push(c); } });
+    if(!seen['-']) out.push('-');
+    return out;
+  }
+  function known(v){ var k = key(v); var hit = null;
+    colourItems().forEach(function(c){ if(!hit && key(c) === k) hit = c; }); return hit; }
+  function dist(a, b){                       /* edit distance, for "Did you mean" */
+    var m = a.length, n = b.length, d = [], i, j;
+    for(i = 0; i <= m; i++){ d[i] = [i]; }
+    for(j = 1; j <= n; j++){ d[0][j] = j; }
+    for(i = 1; i <= m; i++) for(j = 1; j <= n; j++)
+      d[i][j] = Math.min(d[i-1][j] + 1, d[i][j-1] + 1, d[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+    return d[m][n];
+  }
+  /* returns the spelling to use for a typed colour ('' = cancelled) */
+  window.qcCheckColour = function(v){
+    v = String(v || '').replace(/\s+/g, ' ').trim();
+    if(!v) return '';
+    var hit = known(v); if(hit) return hit;            /* same colour, other spelling of case/spaces */
+    var k = key(v), best = null, bd = 99;
+    colourItems().forEach(function(c){ var d = dist(k, key(c)); if(d < bd){ bd = d; best = c; } });
+    if(best && bd <= (k.length <= 4 ? 1 : 2) &&
+       confirm('Did you mean "' + best + '"?\n\nOK = use "' + best + '"\nCancel = keep "' + v + '" as a NEW colour'))
+      return best;
+    return v;
+  };
+
+  function option(sel, value, text, before){
+    var o = document.createElement('option'); o.value = value; o.textContent = text;
+    sel.insertBefore(o, before || null); return o;
+  }
+  /* a saved record may hold a name / colour that is no longer on the list */
+  function ensure(sel, value){
+    if(!sel || sel.tagName !== 'SELECT' || !value) return;
+    for(var i = 0; i < sel.options.length; i++) if(sel.options[i].value === value) return;
+    var other = null;
+    for(var j = 0; j < sel.options.length; j++) if(sel.options[j].value === OTHER) other = sel.options[j];
+    option(sel, value, value, other);
+  }
+  window.qcEnsureOption = ensure;
+
+  /* (re)fill a list, keeping what is selected */
+  function fill(sel, items, withOther){
+    var keep = sel.value;
+    while(sel.options.length) sel.remove(0);
+    option(sel, '', '');
+    items.forEach(function(v){ option(sel, v, v); });
+    if(withOther) option(sel, OTHER, 'Other… (type new colour)');
+    if(keep && keep !== OTHER){ ensure(sel, keep); sel.value = keep; }
+  }
+  function askColour(sel){
+    var v = window.qcCheckColour(prompt('Type the colour:', '') || '');
+    if(v){ ensure(sel, v); sel.value = v; } else sel.value = '';
+    sel.dispatchEvent(new Event('input', { bubbles:true }));
+  }
+  function wireColour(sel){
+    if(sel._qcColour) return; sel._qcColour = true;
+    sel.addEventListener('change', function(){ if(sel.value === OTHER) askColour(sel); });
+  }
+
+  function toList(id, withOther){
+    var inp = document.getElementById(id);
+    if(!inp || inp.tagName !== 'INPUT' || inp.readOnly) return null;
+    if(id === 'color' && String(inp.value || '').trim()) return null;   /* fixed colour stays */
+    var sel = document.createElement('select');
+    sel.id = id; sel.className = inp.className + ' qc-list';
+    fill(sel, withOther ? colourItems() : LISTS.inspectors, withOther);
+    inp.parentNode.replaceChild(sel, inp);
+    if(withOther) wireColour(sel);
+    return sel;
+  }
+  var lists = [toList('inspectedBy', false), toList('color', true)].filter(Boolean);
+
+  /* every list on the page, including the Pre-inspection table rows */
+  function refreshAll(){
+    var ins = document.getElementById('inspectedBy');
+    if(ins && ins.tagName === 'SELECT') fill(ins, LISTS.inspectors, false);
+    var col = document.getElementById('color');
+    if(col && col.tagName === 'SELECT' && col.classList.contains('qc-list')) fill(col, colourItems(), true);
+    document.querySelectorAll('select[data-key="inspectedBy"]').forEach(function(s){ fill(s, LISTS.inspectors, false); });
+    document.querySelectorAll('select[data-key="colour"]').forEach(function(s){ fill(s, colourItems(), true); wireColour(s); });
+  }
+  function save(){ try{ localStorage.setItem(CACHE, JSON.stringify(LISTS)); }catch(e){} }
+
+  function url(){
+    try{ if(typeof activeUrl === 'function') return activeUrl(); }catch(e){}
+    try{ if(typeof loadSettings === 'function'){ var s = loadSettings(); if(s && s.scriptUrl) return s.scriptUrl; } }catch(e){}
+    try{ return DEFAULT_SCRIPT_URL; }catch(e){}
+    return '';
+  }
+  function withQ(u, qs){ return u + (u.indexOf('?') >= 0 ? '&' : '?') + qs; }
+
+  /* after a confirmed submit: colours not on the list go to the Lists tab */
+  function reportNewColours(){
+    var u = url(); if(!u) return;
+    var vals = [];
+    var col = document.getElementById('color');
+    if(col && col.tagName === 'SELECT' && col.classList.contains('qc-list')) vals.push(col.value);
+    document.querySelectorAll('select[data-key="colour"]').forEach(function(s){ vals.push(s.value); });
+    var by = '';
+    var ins = document.getElementById('inspectedBy'); if(ins) by = ins.value;
+    if(!by) document.querySelectorAll('select[data-key="inspectedBy"]').forEach(function(s){ if(!by && s.value) by = s.value; });
+    var done = {};
+    vals.forEach(function(v){
+      v = String(v || '').trim();
+      if(!v || v === OTHER || known(v) || done[key(v)]) return;
+      done[key(v)] = 1;
+      LISTS.colours.push(v); save();
+      fetch(withQ(u, 'action=addColour&colour=' + encodeURIComponent(v) + '&by=' + encodeURIComponent(by))).catch(function(){});
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    /* reloading a record (Verify): keep its saved name / colour visible */
+    var rs = window.restoreState;
+    if(typeof rs === 'function'){
+      window.restoreState = function(st){
+        var m = (st && st.meta) || {};
+        lists.forEach(function(sel){ ensure(sel, m[sel.id]); });
+        return rs.apply(this, arguments);
+      };
+    }
+    /* Reset clears the lists too (the form's own Reset only clears typed boxes) */
+    ['resetForm','resetSilently'].forEach(function(name){
+      var fn = window[name]; if(typeof fn !== 'function') return;
+      window[name] = function(){
+        var r = fn.apply(this, arguments);
+        var jo = document.getElementById('jobOrder');
+        if(jo && !String(jo.value || '').trim()) lists.forEach(function(sel){ sel.value = ''; });
+        return r;
+      };
+    });
+    /* Pre-inspection rebuilds its table on Reset: give the new rows the lists */
+    var bt = window.buildTable;
+    if(typeof bt === 'function'){
+      window.buildTable = function(){ var r = bt.apply(this, arguments); refreshAll(); return r; };
+    }
+    var qs = window.qcSubmitted;
+    if(typeof qs === 'function'){
+      window.qcSubmitted = function(){ var r = qs.apply(this, arguments); try{ reportNewColours(); }catch(e){} return r; };
+    }
+    refreshAll();
+    /* the live lists from the Lists tab */
+    var u = url();
+    if(u){
+      fetch(withQ(u, 'action=lists')).then(function(r){ return r.json(); }).then(function(j){
+        if(!j || !j.ok || !j.inspectors || !j.colours || !j.inspectors.length || !j.colours.length) return;
+        LISTS = { inspectors: j.inspectors, colours: j.colours };
+        save(); refreshAll();
+      }).catch(function(){});
+    }
+  });
+})();
+</script>
 <script id="qc-app-back">
 /* Opened from the QC Verify app on a tablet or phone: after Verify & Save, or
    Exit, go back to the list instead of reloading this record. On the laptop
@@ -848,6 +1079,9 @@ function sendToServer(url, payload){
       fetch(getUrl)
         .then(function(r){ return r.json(); })
         .then(function(json){
+          /* Only a real answer from the Inbox (ok + row number) counts as sent.
+             An error page, a sign-in page or no answer is NOT a submit. */
+          if(!(json && (json.ok === true || json.status === 'ok') && json.rowNum)){ resolve(false); return; }
           resolve(true);  /* Phase 1 done — show ✅ */
 
           /* ── Phase 2: screenshot via POST, best-effort in background ── */
@@ -871,20 +1105,9 @@ function sendToServer(url, payload){
           }
         })
         .catch(function(){
-          /*
-           * fetch() failed — this happens on some browsers when the HTML
-           * file is opened from a USB drive or strict local file:// path.
-           * Fall back to a hidden img tag which always works (GET only,
-           * no CORS check, no response reading — just fires and forgets).
-           * Screenshot will be skipped in this case.
-           */
-          const img = document.createElement('img');
-          img.style.display = 'none';
-          document.body.appendChild(img);
-          const timer = setTimeout(function(){ resolve(false); }, 10000);
-          img.onload  = function(){ clearTimeout(timer); resolve(true); };
-          img.onerror = function(){ clearTimeout(timer); resolve(true); };
-          img.src = getUrl;
+          /* No usable answer from the Inbox. The old hidden-image fallback was
+             removed: it reported "Submitted" even when nothing reached the sheet. */
+          resolve(false);
         });
 
     } catch(e) {
@@ -956,9 +1179,9 @@ function submitRecord(){
         qcSubmitted();
         alert('✅ Submitted to Google Sheet.');
       } else {
-        queueSubmission(payload);
-        qcSubmitted();   /* queued records sync by themselves: never send twice */
-        alert('⚠️ Could not reach the server. This record is queued and will sync automatically when the connection is restored.');
+        /* not confirmed by the Inbox: say so plainly, keep the entries, allow Submit again */
+        qcSubmitFailed();
+        alert('\u274c NOT SENT \u2014 Google Sheet did not confirm this record, so it is NOT in the QC Submissions Inbox.\n\nYour entries are still on the screen. Check the Wi-Fi and press Submit again.\nIf it keeps failing, tell the supervisor.');
       }
     });
   }).catch(err=>{
@@ -1728,6 +1951,44 @@ autoOpenVerifyFromUrl();
   }
   document.addEventListener('input', onEdit, true);
   document.addEventListener('change', onEdit, true);
+})();
+</script>
+<script id="qc-no-refresh">
+/* Accidental refresh guard.
+   1) The page no longer reloads when it is dragged down from the top
+      (Android "pull to refresh"): see the qc-no-pull-refresh style.
+   2) If a reload or close happens another way while there are unsent
+      entries, Chrome asks "Leave site?" first. No question on an empty
+      form, after "Submitted", or while a supervisor is verifying. */
+(function(){
+  var dirty = false;
+  function skip(t){ return !t || !t.closest || t.closest('.modal, .settings-panel, #settingsPanel, .statusbar, .actionbar'); }
+  function onEdit(e){ if(!skip(e.target)) dirty = true; }
+  document.addEventListener('input',  onEdit, true);
+  document.addEventListener('change', onEdit, true);
+  function verifying(){ try{ return !!VERIFY_ROW; }catch(e){ return false; } }
+  function submitted(){
+    var c = document.getElementById('chipSync');
+    if(c && /submitted/i.test(c.textContent)) return true;
+    try{ if(DC_SUBMITTED) return true; }catch(e){}
+    return false;
+  }
+  window.addEventListener('beforeunload', function(e){
+    if(!dirty || verifying() || submitted()) return;
+    e.preventDefault(); e.returnValue = ''; return '';
+  });
+  /* a real Reset empties the form: nothing left to protect */
+  ['resetForm','resetSilently'].forEach(function(name){
+    var fn = window[name]; if(typeof fn !== 'function') return;
+    window[name] = function(){
+      var r = fn.apply(this, arguments);
+      var jo = document.getElementById('jobOrder');
+      var empty = jo ? !String(jo.value || '').trim()
+                     : (typeof window.collectRows === 'function' ? !window.collectRows().length : true);
+      if(empty) dirty = false;
+      return r;
+    };
+  });
 })();
 </script>
 </body>

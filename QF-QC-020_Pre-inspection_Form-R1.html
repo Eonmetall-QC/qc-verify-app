@@ -161,6 +161,58 @@
   }
 </style>
 <style id="qc-no-pull-refresh">html, body{ overscroll-behavior-y: contain; }   /* no reload when the page is dragged down from the top */</style>
+<!-- inspector & colour lists: qc-lists.js (shared file). If it cannot be found, the copy below is used. -->
+<script src="qc-lists.js"></script>
+<script src="../qc-lists.js"></script>
+<script id="qc-lists-default">
+window.QC_LISTS_DEFAULT = {
+
+  inspectors: [
+    "DAHAMAN",
+    "IQBAL",
+    "RASHID",
+    "REZA",
+  ],
+
+  colours: [
+    "Apple Green",
+    "Beige",
+    "Black",
+    "Blue",
+    "Dim Grey",
+    "Em Silver",
+    "GI",
+    "Grey",
+    "Green",
+    "Lt Beige",
+    "Lt Grey",
+    "Lavender",
+    "Matt Red",
+    "Matt Yellow",
+    "Matt Grey",
+    "Mini Black",
+    "Mx Grey",
+    "Orange",
+    "Pink",
+    "Red",
+    "Rod Grey",
+    "Sg Beige",
+    "Sky Blue",
+    "Sand Black",
+    "Sage Green",
+    "Silver",
+    "White",
+    "Yellow",
+  ],
+
+};
+</script>
+<script id="qc-lists-cache">
+/* the last lists received from the "Lists" tab (kept on this device) come first */
+(function(){ try{ var c = JSON.parse(localStorage.getItem('qcListsLive') || 'null');
+  if(c && c.inspectors && c.inspectors.length && c.colours && c.colours.length) window.QC_LISTS = c; }catch(e){} })();
+</script>
+<style id="qc-lists-style">select.qc-list{ font:inherit; color:inherit; background:transparent; border:none; border-bottom:1px solid #000; padding:0 2px; min-width:120px; }</style>
 </head>
 <body>
 
@@ -548,7 +600,10 @@ function submitRecord(){
 
 const DATA_ROWS = 19;
 const MACHINES  = ["Coating 3", "Coating 8", "Coating 9", "Coating 10", "Coating 11", "Coating 12", "Coating 13"];
-const COLOURS   = ["Apple Green", "Beige", "Black", "Blue", "Dim Grey", "Em Silver", "GI", "Grey", "Green", "Lt Beige", "Lt Grey", "Lavender", "Matt Red", "Matt Yellow", "Matt Grey", "Mini Black", "Mx Grey", "Orange", "Pink", "Red", "Rod Grey", "Sg Beige", "Sky Blue", "Sand Black", "Sage Green", "Silver", "White", "Yellow", "Other", "-"];
+const COLOURS   = (function(){ var L=window.QC_LISTS||{}, D=window.QC_LISTS_DEFAULT||{};
+  var c=(L.colours&&L.colours.length)?L.colours:D.colours; return c.concat(['Other','-']); })();   /* from qc-lists.js */
+const INSPECTORS = (function(){ var L=window.QC_LISTS||{}, D=window.QC_LISTS_DEFAULT||{};
+  return (L.inspectors&&L.inspectors.length)?L.inspectors:D.inspectors; })();   /* from qc-lists.js */
 const DESCRIPTIONS = [["MultiRack", ["DRB", "Joint Bracket", "Metal Shelve", "Upright", "2 in 1 Rack Set (Packaging)", "Color & Piccolo Rack Set (Packaging)", "Convy Rack Set (Packaging)"]], ["LDRack", ["CTS single rivet", "DRB Front and side brace(C  Butterfly)", "Upright", "Metal Shelve -Cap Tye", "Metal Shelve-Bending normal 25mm", "Reenforce Shelving 24mm"]], ["MonaRackPackaging", ["Mona Rack #5638891 PS36-in Vertical Post", "Mona Rack #5638893 PS72-in Vertical Post", "Mona Rack #5638898 PS84-in Vertical Post", "Mona Rack #5638894 PS Shelf Frame 36x18", "Mona Rack #5638899 PS Shelf Frame 48x24", "Mona Rack #5638897 PS 36-in Wire Shelf Deck", "Mona Rack #5638892 PS 48-in Wire Shelf Deck", "Mona Rack #5638896 PS 36-in Steel Shelf Deck", "Mona Rack #5638895 PS 48-in Steel Shelf Deck", "Mona Rack #2565538 set packaging (Project Source)", "Mona Rack #2565539 set packaging (Project Source)", "Mona Rack #4138319 set packaging (Project Source)", "Mona Rack #4897341 set packaging (Project Source)", "Mona Rack #4351387 set packaging (Project Source)", "Mona Rack #4351388 set packaging (Project Source)", "Mona Rack #2565538 Full set (Project Source)", "Mona Rack #2565539 Full set (Project Source)", "Mona Rack #4138319 Full set (Project Source)", "Mona Rack #4897341 Full set (Project Source)", "Mona Rack #4351387 Full set (Project Source)", "Mona Rack #4351388 Full set (Project Source)", "Mona Rack #5310-B0650GS set packaging (Storage Concepts)", "Mona Rack #5310-B0750GS set packaging (Storage Concepts)", "Mona Rack #5310-B0770GS set packaging (Storage Concepts)", "Mona Rack #5310-B0850GS set packaging (Storage Concepts)", "Mona Rack #5310-BM1505GS set packaging (Storage Concepts)", "Mona Rack #5310-BM2505GS set packaging (Storage Concepts)", "Mona Rack #SCB0650D packaging (Storage Concepts)", "Mona Rack #SCB0750D packaging (Storage Concepts)", "Mona Rack #SCB0770D packaging (Storage Concepts)", "Mona Rack #SCB0850D packaging (Storage Concepts)", "Mona Rack #SCB1505W packaging (Storage Concepts)", "Mona Rack #SCB2505W packaging (Storage Concepts)", "Mona Rack #310-ORG1505W set packaging (Prosource)", "Mona Rack #310-ORG2505W set packaging (Prosource)", "Mona Rack #310-ORG1505M set packaging (Prosource)", "Mona Rack #310-ORG2505M set packaging (Prosource)", "Mona Rack #8131765  full set (Prosource)", "Mona Rack #8166936  full set (Prosource)", "Mona Rack #8163073  full set (Prosource)", "Mona Rack #8192056  full set (Prosource)", "Mona Rack Set"]], ["MonaRack", ["Mona New- Center Support", "Mona New S-DRB Rivet", "Mona New S-Upright", "Mona New- Z Rivet Special Shelve Stiffener", "Mona New- Z Rivet Special Shelve", "Mona New- Z Rivet Upright 38x38mm", "Mona New- Z Rivet Upright", "Mona New-Z Beam DRZ Rivet with hole", "Mona New-Z Beam DRZ Rivet", "Mona Rack -Z Beam Rivet Upright"]], ["RivetLock", ["60 Post Packaging", "Angle Post", "Axle Bracket Beam", "Axle Bracket Pipe", "Center Deck Support", "Double Rivet Beam Kit Packaging", "Double Rivet Beam", "Double Rivet Channel Beam", "Double Rivet Z Beam Support", "Double Rivet Z Beam", "Hd Shelving Steel Deck Packaging", "Hd Shelving Steel Deck", "Modular Bar Stack Rack Packaging", "Modular Bar Stack Rack", "Portable Stack Rack Packaging", "Portable Stack Rack", "Rivel Lock Packaging", "Rivel Lock Set Packaging", "Rivet Lock Axle Bracket Kit Packaging", "Single Rivet Beam", "T Post", "Tie Plate", "Wall Mount"]], ["System", ["S23 Deck Support", "S23 End Connector", "S23 Welded Upright Post - Base Plate & Welding", "S23 Welded Upright Post", "S23 Z Beam", "S23 Upright Post Crossbar", "Sys 23 Packaging - Deck Support", "Sys 23 Packaging - Z Beam", "Sys 23 Packaging - Endframe", "Steel Decking Panel Packaging", "Steel Decking Panel"]], ["EMTS", ["Batch Panel Mail Box Moulding", "Divider Panel Mail Box Moulding", "HD Base Plate", "HD Box Beam N100x40", "HD Bracing", "HD End Connector", "HD Endframe Full Set", "HD Support Beam Welding", "HD Support Beam", "HD Upright", "MD Am Racking Set Packaging", "MD Divider", "MD Front & Side Brace", "MD L Upright", "MD T Upright"]], ["Other", ["Angle Bar", "Bend Plate 44x44x600L", "Blank mouth Ring", "Cart Stopper", "Coil", "Metal Shelve-HDR (Medium Duty)", "Metal Shelve-HDR", "Metal Shelve-Shelf Boltfree", "Metal Shelve-SS", "Metal Shelve-TP", "Adjustable BPLT Upr90 Upstand (Low Profile)", "Back Mesh Bracket (Left) For EN76-100 Upright (Replacement)", "Backstopper (Double) SHS 50x50x1.5 2700CE", "Backstopper (Shared) SHS 50x50x1.5 CE", "Backstopper (Single) SHS 50x50x1.5 2700CE", "Baseplate CR18-90", "Baseplate CR18-100", "Bolted Beam End Connector", "Column Guard C18 90_100 BTM BM H300 (D230022-703-00)", "Column Guard C18 90_100 BTM BM H300 (PHS0047-M-001)", "Column Guard C18 90_100 H250", "Column Guard C18 90_100 H300", "CR18 90 Back Splice", "CR18 90 Front Splice", "CR18 -Baseplate MOVO UPright P100", "CR18 Movo Base Plate 100", "CR18 -Shim Plate Baseplate MOVO UPright P100", "CR18- Support for Prot. Beam -H=400mm Development", "CR18-100 Base Plate (W250 x D125 X H144)", "Crash Barrier Base Plate", "EN76-100 HD Baseplate 6x160x180mm", "FGR - Fish Plate", "Lead in 1300FD", "Leveling Plate 240x120x1.5mmT", "LH & RH Entry Arm F1", "LH & RH Entry Arm F2", "LH & RH Mid Arm F1", "LH & RH Mid Arm F2", "LH & RH Splice Arm", "LH & RH Stopper", "MS Plate 50x110x5mmT", "MS Plate 150x110x5mmT", "P & D Front Panel L", "Plan Bracing Cleat", "Plan Bracing Flat Bar 50x4 L", "Rail Mid Tie Support", "Rail Shim", "Rail Support R90-40 L1140 T2", "Seismic Baseplate 230x100x15mmT", "Seismic Baseplate 240x120x15mmT", "Single & Double Wheel Stop", "SPL Column Guard 90_100 BTM BM H250 A160 (DD)", "Splice Arm Bracket", "Super Block Standard Baseplate 8x230x230mm", "Top Hat Bracket", "Tower Frame Space SHS75x5mmT D209", "Tower Spine Baseplate 230x220x15mmT", "V Shape Angle Bar Protector 300mmH", "Vernier Flatbar 50x4x698mmL", "EN60- UR90 Frame Spacer Base Plate", "EN60- UR90 Stand Off Spacer Base Plate", "Heavy Duty- Row Spacer Base Plate"]]];          /* [[category, [item, ...]], ...] */
 const MANUAL_VALUE = "__manual__";
 const MANUAL_LABEL = "(blank - type new item)";
@@ -593,7 +648,8 @@ function buildTable(){
         + COLOURS.map(c=>opt(c)).join('') + '</select></td>'
       + '<td><input type="text" class="cellinput" data-key="thickness"></td>'
       + '<td><input type="text" class="cellinput" data-key="travellerCard"></td>'
-      + '<td><input type="text" class="cellinput" data-key="inspectedBy"></td>'
+      + '<td><select class="cellinput" data-key="inspectedBy"><option value=""></option>'
+        + INSPECTORS.map(c=>opt(c)).join('') + '</select></td>'
       + '<td><select class="cellinput" data-key="result"><option value=""></option>'
         + opt('Pass') + opt('Fail') + '</select></td>'
       + '<td><input type="text" class="cellinput" data-key="remark"></td>'
@@ -991,6 +1047,8 @@ function restoreState(st){
     Object.keys(r.values || {}).forEach(k=>{
       const el = tr.querySelector('[data-key="' + k + '"]');
       if(!el) return;
+      /* a name / colour no longer on the list stays visible on old records */
+      if(el.tagName === 'SELECT' && r.values[k] && ![...el.options].some(o=>o.value === r.values[k])) el.add(new Option(r.values[k], r.values[k]));
       el.value = r.values[k];
       if(el.classList.contains('descsel')){
         const man = tr.querySelector('.descman');
@@ -1378,6 +1436,184 @@ autoOpenVerifyFromUrl();
       if(empty) dirty = false;
       return r;
     };
+  });
+})();
+</script>
+<script id="qc-lists-fields">
+/* Inspector and Colour lists.
+   - The lists live in the "Lists" tab of the QC Submissions Inbox. Each form
+     loads them when it opens and keeps the last copy on this device, so the
+     lists still work without a connection.
+   - "Inspected By": choose from the list only.
+   - "Color" (forms with no fixed colour): choose from the list, or
+     "Other…" to type a new colour. A "Did you mean …?" check catches typos.
+     A new colour is added to the Lists tab once the record has been
+     submitted, so every form shows it the next time it opens.
+   - The Pre-inspection form's per-row Colour / Inspected By lists follow the
+     same lists. */
+(function(){
+  var CACHE = 'qcListsLive';
+  var OTHER = '__other__';
+  var L0 = window.QC_LISTS || {}, D0 = window.QC_LISTS_DEFAULT || {};
+  var LISTS = {
+    inspectors: (L0.inspectors && L0.inspectors.length) ? L0.inspectors.slice() : (D0.inspectors || []).slice(),
+    colours:    (L0.colours    && L0.colours.length)    ? L0.colours.slice()    : (D0.colours    || []).slice()
+  };
+  function key(s){ return String(s || '').toLowerCase().replace(/[^a-z0-9-]/g, ''); }
+  function colourItems(){
+    var out = [], seen = {};
+    LISTS.colours.forEach(function(c){ c = String(c || '').trim(); var k = key(c);
+      if(c && k && !/^other/.test(k) && !seen[k]){ seen[k] = 1; out.push(c); } });
+    if(!seen['-']) out.push('-');
+    return out;
+  }
+  function known(v){ var k = key(v); var hit = null;
+    colourItems().forEach(function(c){ if(!hit && key(c) === k) hit = c; }); return hit; }
+  function dist(a, b){                       /* edit distance, for "Did you mean" */
+    var m = a.length, n = b.length, d = [], i, j;
+    for(i = 0; i <= m; i++){ d[i] = [i]; }
+    for(j = 1; j <= n; j++){ d[0][j] = j; }
+    for(i = 1; i <= m; i++) for(j = 1; j <= n; j++)
+      d[i][j] = Math.min(d[i-1][j] + 1, d[i][j-1] + 1, d[i-1][j-1] + (a[i-1] === b[j-1] ? 0 : 1));
+    return d[m][n];
+  }
+  /* returns the spelling to use for a typed colour ('' = cancelled) */
+  window.qcCheckColour = function(v){
+    v = String(v || '').replace(/\s+/g, ' ').trim();
+    if(!v) return '';
+    var hit = known(v); if(hit) return hit;            /* same colour, other spelling of case/spaces */
+    var k = key(v), best = null, bd = 99;
+    colourItems().forEach(function(c){ var d = dist(k, key(c)); if(d < bd){ bd = d; best = c; } });
+    if(best && bd <= (k.length <= 4 ? 1 : 2) &&
+       confirm('Did you mean "' + best + '"?\n\nOK = use "' + best + '"\nCancel = keep "' + v + '" as a NEW colour'))
+      return best;
+    return v;
+  };
+
+  function option(sel, value, text, before){
+    var o = document.createElement('option'); o.value = value; o.textContent = text;
+    sel.insertBefore(o, before || null); return o;
+  }
+  /* a saved record may hold a name / colour that is no longer on the list */
+  function ensure(sel, value){
+    if(!sel || sel.tagName !== 'SELECT' || !value) return;
+    for(var i = 0; i < sel.options.length; i++) if(sel.options[i].value === value) return;
+    var other = null;
+    for(var j = 0; j < sel.options.length; j++) if(sel.options[j].value === OTHER) other = sel.options[j];
+    option(sel, value, value, other);
+  }
+  window.qcEnsureOption = ensure;
+
+  /* (re)fill a list, keeping what is selected */
+  function fill(sel, items, withOther){
+    var keep = sel.value;
+    while(sel.options.length) sel.remove(0);
+    option(sel, '', '');
+    items.forEach(function(v){ option(sel, v, v); });
+    if(withOther) option(sel, OTHER, 'Other… (type new colour)');
+    if(keep && keep !== OTHER){ ensure(sel, keep); sel.value = keep; }
+  }
+  function askColour(sel){
+    var v = window.qcCheckColour(prompt('Type the colour:', '') || '');
+    if(v){ ensure(sel, v); sel.value = v; } else sel.value = '';
+    sel.dispatchEvent(new Event('input', { bubbles:true }));
+  }
+  function wireColour(sel){
+    if(sel._qcColour) return; sel._qcColour = true;
+    sel.addEventListener('change', function(){ if(sel.value === OTHER) askColour(sel); });
+  }
+
+  function toList(id, withOther){
+    var inp = document.getElementById(id);
+    if(!inp || inp.tagName !== 'INPUT' || inp.readOnly) return null;
+    if(id === 'color' && String(inp.value || '').trim()) return null;   /* fixed colour stays */
+    var sel = document.createElement('select');
+    sel.id = id; sel.className = inp.className + ' qc-list';
+    fill(sel, withOther ? colourItems() : LISTS.inspectors, withOther);
+    inp.parentNode.replaceChild(sel, inp);
+    if(withOther) wireColour(sel);
+    return sel;
+  }
+  var lists = [toList('inspectedBy', false), toList('color', true)].filter(Boolean);
+
+  /* every list on the page, including the Pre-inspection table rows */
+  function refreshAll(){
+    var ins = document.getElementById('inspectedBy');
+    if(ins && ins.tagName === 'SELECT') fill(ins, LISTS.inspectors, false);
+    var col = document.getElementById('color');
+    if(col && col.tagName === 'SELECT' && col.classList.contains('qc-list')) fill(col, colourItems(), true);
+    document.querySelectorAll('select[data-key="inspectedBy"]').forEach(function(s){ fill(s, LISTS.inspectors, false); });
+    document.querySelectorAll('select[data-key="colour"]').forEach(function(s){ fill(s, colourItems(), true); wireColour(s); });
+  }
+  function save(){ try{ localStorage.setItem(CACHE, JSON.stringify(LISTS)); }catch(e){} }
+
+  function url(){
+    try{ if(typeof activeUrl === 'function') return activeUrl(); }catch(e){}
+    try{ if(typeof loadSettings === 'function'){ var s = loadSettings(); if(s && s.scriptUrl) return s.scriptUrl; } }catch(e){}
+    try{ return DEFAULT_SCRIPT_URL; }catch(e){}
+    return '';
+  }
+  function withQ(u, qs){ return u + (u.indexOf('?') >= 0 ? '&' : '?') + qs; }
+
+  /* after a confirmed submit: colours not on the list go to the Lists tab */
+  function reportNewColours(){
+    var u = url(); if(!u) return;
+    var vals = [];
+    var col = document.getElementById('color');
+    if(col && col.tagName === 'SELECT' && col.classList.contains('qc-list')) vals.push(col.value);
+    document.querySelectorAll('select[data-key="colour"]').forEach(function(s){ vals.push(s.value); });
+    var by = '';
+    var ins = document.getElementById('inspectedBy'); if(ins) by = ins.value;
+    if(!by) document.querySelectorAll('select[data-key="inspectedBy"]').forEach(function(s){ if(!by && s.value) by = s.value; });
+    var done = {};
+    vals.forEach(function(v){
+      v = String(v || '').trim();
+      if(!v || v === OTHER || known(v) || done[key(v)]) return;
+      done[key(v)] = 1;
+      LISTS.colours.push(v); save();
+      fetch(withQ(u, 'action=addColour&colour=' + encodeURIComponent(v) + '&by=' + encodeURIComponent(by))).catch(function(){});
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    /* reloading a record (Verify): keep its saved name / colour visible */
+    var rs = window.restoreState;
+    if(typeof rs === 'function'){
+      window.restoreState = function(st){
+        var m = (st && st.meta) || {};
+        lists.forEach(function(sel){ ensure(sel, m[sel.id]); });
+        return rs.apply(this, arguments);
+      };
+    }
+    /* Reset clears the lists too (the form's own Reset only clears typed boxes) */
+    ['resetForm','resetSilently'].forEach(function(name){
+      var fn = window[name]; if(typeof fn !== 'function') return;
+      window[name] = function(){
+        var r = fn.apply(this, arguments);
+        var jo = document.getElementById('jobOrder');
+        if(jo && !String(jo.value || '').trim()) lists.forEach(function(sel){ sel.value = ''; });
+        return r;
+      };
+    });
+    /* Pre-inspection rebuilds its table on Reset: give the new rows the lists */
+    var bt = window.buildTable;
+    if(typeof bt === 'function'){
+      window.buildTable = function(){ var r = bt.apply(this, arguments); refreshAll(); return r; };
+    }
+    var qs = window.qcSubmitted;
+    if(typeof qs === 'function'){
+      window.qcSubmitted = function(){ var r = qs.apply(this, arguments); try{ reportNewColours(); }catch(e){} return r; };
+    }
+    refreshAll();
+    /* the live lists from the Lists tab */
+    var u = url();
+    if(u){
+      fetch(withQ(u, 'action=lists')).then(function(r){ return r.json(); }).then(function(j){
+        if(!j || !j.ok || !j.inspectors || !j.colours || !j.inspectors.length || !j.colours.length) return;
+        LISTS = { inspectors: j.inspectors, colours: j.colours };
+        save(); refreshAll();
+      }).catch(function(){});
+    }
   });
 })();
 </script>
