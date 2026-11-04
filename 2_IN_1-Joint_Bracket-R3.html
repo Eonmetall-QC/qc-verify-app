@@ -2025,5 +2025,86 @@ autoOpenVerifyFromUrl();
   });
 })();
 </script>
+<script id="qc-sent-memory">
+/* "Already sent" memory (this device).
+   Every record that reaches the QC Submissions Inbox is remembered here for
+   3 days by a fingerprint of everything typed / ticked on the form. Sending
+   the very same inspection again - after editing back and forth, after
+   reopening the form and typing it again, or from another tab - is refused.
+   If an earlier try got no answer (Wi-Fi), the same record is only sent again
+   after the inspector confirms the supervisor has checked the Inbox. */
+(function(){
+  var LOG = 'qcSentLog', KEEP_MS = 3 * 24 * 3600 * 1000;
+  var page = decodeURIComponent(location.pathname.split('/').pop() || '');
+  var pendingKey = null, pendingJo = '';
+
+  function load(){ try{ return JSON.parse(localStorage.getItem(LOG) || '[]'); }catch(e){ return []; } }
+  function save(a){ try{ localStorage.setItem(LOG, JSON.stringify(a.slice(-400))); }catch(e){} }
+  function hash(s){ var h = 2166136261; for(var i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); }
+  function root(){ return document.getElementById('page') || document.querySelector('.content') || document.body; }
+
+  /* everything the inspector entered (not the clock times, which change on re-typing) */
+  function fingerprint(){
+    var parts = [page];
+    root().querySelectorAll('input, select, textarea').forEach(function(el, i){
+      if(el.closest('.modal, .settings-panel, #settingsPanel, .statusbar, .actionbar')) return;
+      var t = (el.type || '').toLowerCase();
+      if(t === 'hidden' || t === 'file' || t === 'button' || t === 'time' || el.classList.contains('timeinput')) return;
+      var v = (t === 'checkbox' || t === 'radio') ? (el.checked ? '1' : '') : String(el.value || '').trim();
+      if(v) parts.push((el.id || el.name || el.getAttribute('data-key') || i) + '=' + v);
+    });
+    return hash(parts.join('|'));
+  }
+  function jobOrders(){
+    var jo = document.getElementById('jobOrder');
+    if(jo) return String(jo.value || '').trim();
+    var a = []; document.querySelectorAll('[data-key="jobOrder"]').forEach(function(e){ if(e.value.trim()) a.push(e.value.trim()); });
+    return a.slice(0, 3).join(', ') + (a.length > 3 ? '…' : '');
+  }
+  function remember(state){
+    if(!pendingKey) return;
+    var now = Date.now(), a = load().filter(function(x){ return now - x.t < KEEP_MS && !(x.k === pendingKey && x.s === 'unsure'); });
+    a.push({ k: pendingKey, t: now, s: state, jo: pendingJo, f: page });
+    save(a);
+  }
+  function when(t){ var d = new Date(t), p = function(n){ return String(n).padStart(2,'0'); };
+    var today = new Date().toDateString() === d.toDateString();
+    return (today ? 'today' : p(d.getDate()) + '/' + p(d.getMonth()+1)) + ' at ' + p(d.getHours()) + ':' + p(d.getMinutes()); }
+
+  var inner = window.submitRecord;
+  if(typeof inner === 'function'){
+    window.submitRecord = function(){
+      var k = fingerprint(), now = Date.now();
+      var hit = null;
+      load().forEach(function(x){ if(x.k === k && now - x.t < KEEP_MS && (!hit || x.t > hit.t)) hit = x; });
+      if(hit && hit.s === 'sent'){
+        alert('⛔ Already submitted ' + when(hit.t) + (hit.jo ? ' (Job Order ' + hit.jo + ')' : '') + '.\n\n'
+            + 'This exact inspection is already in the QC Submissions Inbox, so it was NOT sent again.\n\n'
+            + 'For a new inspection, enter the new details. If the supervisor deleted the earlier row and asks you '
+            + 'to send it again, add a note in Remarks first.');
+        return;
+      }
+      if(hit && hit.s === 'unsure' &&
+         !confirm('⚠️ You already tried to send this same inspection ' + when(hit.t) + ', but Google Sheet did not answer.\n'
+                + 'It MAY already be in the QC Submissions Inbox.\n\n'
+                + 'Ask the supervisor to check the Inbox' + (hit.jo ? ' for Job Order ' + hit.jo : '') + ' first.\n\n'
+                + 'OK = it is NOT there, send now\nCancel = do not send')) return;
+      pendingKey = k; pendingJo = jobOrders();
+      return inner.apply(this, arguments);
+    };
+  }
+  /* the moment the record really leaves this device it counts as "maybe sent";
+     Google's confirmation turns it into "sent" */
+  var f0 = window.fetch;
+  if(typeof f0 === 'function') window.fetch = function(url){
+    try{ if(pendingKey && /[?&]payload=/.test(String(url))) remember('unsure'); }catch(e){}
+    return f0.apply(this, arguments);
+  };
+  var ok = window.qcSubmitted;
+  if(typeof ok === 'function') window.qcSubmitted = function(){ remember('sent'); return ok.apply(this, arguments); };
+  var bad = window.qcSubmitFailed;
+  if(typeof bad === 'function') window.qcSubmitFailed = function(){ var r = bad.apply(this, arguments); if(r === true) remember('sent'); return r; };
+})();
+</script>
 </body>
 </html>
