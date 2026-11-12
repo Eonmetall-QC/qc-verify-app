@@ -438,7 +438,7 @@ window.QC_LISTS_DEFAULT = {
       <span class="chk"><input type="checkbox" id="p_form"><label for="p_form">Forming</label></span>
       <span class="chk"><input type="checkbox" id="p_weld"><label for="p_weld">Welding</label></span>
       <span class="chk"><input type="checkbox" id="p_pack"><label for="p_pack">Packing</label></span>
-      <span class="chk"><input type="checkbox" id="p_other_chk"><label for="p_other_chk">Other:</label><input type="text" class="fill" style="width:110px;" id="p_other" value="Coating"></span>
+      <span class="chk"><input type="checkbox" id="p_other_chk"><label for="p_other_chk">Other:</label><select class="fill" style="width:132px;" id="p_other"><option value=""></option><option>Coating 3</option><option>Coating 8</option><option>Coating 9</option><option>Coating 10</option><option>Coating 11</option><option>Coating 12</option><option>Coating 13</option><option value="__other__">Other… (type)</option></select></span>
     </div>
 
     <!-- DIMENSION SPEC + MEASUREMENT TABLE -->
@@ -1255,7 +1255,7 @@ function submitRecord(){
   _submitting = true;   /* block flushQueue while this submit is running */
   captureScreenshot().then(dataUrl=>{
     const now = new Date(); const pad = n => String(n).padStart(2,'0'); const capturedAt = String(now.getFullYear()) + pad(now.getMonth()+1) + pad(now.getDate()) + '_' + pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds());
-    const recordId = capturedAt + '_' + Math.random().toString(36).slice(2,8);
+    const recordId = (window.qcSameId ? qcSameId(capturedAt + '_' + Math.random().toString(36).slice(2,8)) : (capturedAt + '_' + Math.random().toString(36).slice(2,8)));
     const payload = { row: row, screenshot: dataUrl, formName: FORM_NAME, capturedAt: capturedAt, recordId: recordId, state: state, _ts: Date.now() };
     const s = loadSettings();
     if(!s.scriptUrl){
@@ -1272,7 +1272,7 @@ function submitRecord(){
       } else {
         /* not confirmed by the Inbox: say so plainly, keep the entries, allow Submit again */
         qcSubmitFailed();
-        alert('\u274c NOT SENT \u2014 Google Sheet did not confirm this record, so it is NOT in the QC Submissions Inbox.\n\nYour entries are still on the screen. Check the Wi-Fi and press Submit again.\nIf it keeps failing, tell the supervisor.');
+        alert('\u274c NOT CONFIRMED \u2014 Google Sheet did not answer, so this record may not be in the QC Submissions Inbox.\n\nYour entries are still on the screen. Check the Wi-Fi and press Submit again WITHOUT changing anything.\n(If the first try did arrive, it will NOT be added twice.)\nIf it keeps failing, tell the supervisor.');
       }
     });
   }).catch(err=>{
@@ -1805,7 +1805,7 @@ autoOpenVerifyFromUrl();
       return true;   /* handled: the form should not show its own "failed" message */
     }
     settle('idle');
-    chip('not sent', 'bad');
+    chip('not confirmed', 'bad');
     return false;
   };
 
@@ -2111,6 +2111,95 @@ autoOpenVerifyFromUrl();
   if(typeof ok === 'function') window.qcSubmitted = function(){ remember('sent'); return ok.apply(this, arguments); };
   var bad = window.qcSubmitFailed;
   if(typeof bad === 'function') window.qcSubmitFailed = function(){ var r = bad.apply(this, arguments); if(r === true) remember('sent'); return r; };
+})();
+</script>
+<script id="qc-same-id">
+/* One send = one row.
+   If Google saved a record but the reply was lost (Wi-Fi drop), the form
+   cannot tell and asks to press Submit again. The record is then sent again
+   with the SAME Record ID as the first try (as long as nothing on the form
+   was changed), so the QC Submissions Inbox recognises it and keeps ONE row.
+   The remembered ID is cleared as soon as a Submit is confirmed. */
+(function(){
+  var KEY = 'qcSameId', KEEP_MS = 24 * 3600 * 1000;
+  function formKey(){ return decodeURIComponent(location.pathname.split('/').pop() || ''); }
+  function fingerprint(){
+    var seen = [], out = [];
+    document.querySelectorAll('#page input, #page select, #page textarea, .content input, .content select, .content textarea')
+      .forEach(function(el){
+        if(seen.indexOf(el) >= 0) return; seen.push(el);
+        if(el.type === 'file' || el.type === 'button' || el.type === 'submit' || el.type === 'hidden') return;
+        if(el.closest && el.closest('.modal, .settings-panel, #settingsPanel, .statusbar, .actionbar')) return;
+        out.push((el.type === 'checkbox' || el.type === 'radio') ? (el.checked ? '1' : '') : String(el.value || '').trim());
+      });
+    var s = out.join('\u0001'), h = 5381;
+    for(var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+    return (h >>> 0).toString(36) + '_' + s.length;
+  }
+  function load(){ try{ return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; }catch(e){ return {}; } }
+  function save(m){ try{ localStorage.setItem(KEY, JSON.stringify(m)); }catch(e){} }
+  var mem = {};                                   /* used when this device cannot store */
+  window.qcSameId = function(fresh){
+    var all = load(), k = formKey(), f = fingerprint(), now = Date.now();
+    var s = all[k] || mem[k];
+    if(s && s.fp === f && now - s.t < KEEP_MS) return s.id;      /* same record, sent again */
+    all[k] = mem[k] = { id: fresh, fp: f, t: now }; save(all);
+    return fresh;
+  };
+  document.addEventListener('DOMContentLoaded', function(){
+    var ok = window.qcSubmitted;
+    if(typeof ok !== 'function') return;
+    window.qcSubmitted = function(){
+      var r = ok.apply(this, arguments);
+      var all = load(); delete all[formKey()]; delete mem[formKey()]; save(all);
+      return r;
+    };
+  });
+})();
+</script>
+<script id="qc-coating-line">
+/* Process "Other": the coating line is chosen from a list, so the name always
+   matches the monthly report (Coating 3, 8, 9, 10, 11, 12, 13).
+   "Other… (type)" is for anything else. Choosing a line ticks "Other" by itself. */
+(function(){
+  var sel = document.getElementById('p_other'), chk = document.getElementById('p_other_chk');
+  if(!sel || sel.tagName !== 'SELECT') return;
+  function clean(v){
+    return String(v || '').replace(/\s+/g, ' ').trim()
+      .replace(/([A-Za-z])(\d)/g, '$1 $2').replace(/(\d)([A-Za-z])/g, '$1 $2')
+      .replace(/\b0+(\d)/g, '$1')
+      .replace(/[A-Za-z]+/g, function(w){ return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase(); });
+  }
+  function ensure(v){
+    if(!v) return;
+    for(var i = 0; i < sel.options.length; i++) if(sel.options[i].value === v) return;
+    var o = document.createElement('option'); o.value = v; o.textContent = v;
+    sel.insertBefore(o, sel.options[sel.options.length - 1]);
+  }
+  sel.addEventListener('change', function(){
+    if(sel.value === '__other__'){
+      var v = clean(prompt('Type the process (e.g. Coating 3, Laser):', '') || '');
+      if(/^coating$/i.test(v)){ alert('Please include the coating line number, e.g. Coating 3.'); v = ''; }
+      if(v){ ensure(v); sel.value = v; } else sel.value = '';
+    }
+    if(chk && chk.checked !== !!sel.value){ chk.checked = !!sel.value; chk.dispatchEvent(new Event('change', { bubbles:true })); }
+  });
+  document.addEventListener('DOMContentLoaded', function(){
+    /* records saved before this change may hold any text (e.g. "Coating 003") */
+    var rs = window.restoreState;
+    if(typeof rs === 'function'){
+      window.restoreState = function(st){ ensure(st && st.meta && st.meta.p_other); return rs.apply(this, arguments); };
+    }
+    ['resetForm','resetSilently'].forEach(function(name){
+      var fn = window[name]; if(typeof fn !== 'function') return;
+      window[name] = function(){
+        var r = fn.apply(this, arguments);
+        var jo = document.getElementById('jobOrder');
+        if(jo && !String(jo.value || '').trim()) sel.value = '';
+        return r;
+      };
+    });
+  });
 })();
 </script>
 </body>
