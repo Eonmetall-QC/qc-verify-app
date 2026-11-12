@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=794, minimum-scale=0.25, maximum-scale=6.0, user-scalable=yes">
-<title>QF-QC-002(B) &mdash; S23 Welder Upright Post (Weld with Base Plate) Base Plate</title>
+<title>QF-QC-002(B) &mdash; S23 Welded Upright Post (Weld with Base Plate) Base Plate</title>
 <style>
   :root{
     --ink:#000;
@@ -452,7 +452,7 @@ window.QC_LISTS_DEFAULT = {
     <div class="jobinfo-row r3">
       <div class="grp"><span class="lbl">Lot Size :</span><input type="text" class="fill grow" id="lotSize"></div>
       <div class="grp"><span class="lbl">Description :</span>
-        <span class="chk"><input type="checkbox" id="d_opt1" data-optlabel="S23 Welder Upright Post (Weld with Base Plate)"><label for="d_opt1">S23 Welder Upright Post (Weld with Base Plate)</label></span>
+        <span class="chk"><input type="checkbox" id="d_opt1" data-optlabel="S23 Welded Upright Post (Weld with Base Plate)"><label for="d_opt1">S23 Welded Upright Post (Weld with Base Plate)</label></span>
         <span class="chk"><input type="checkbox" id="d_opt2" data-optlabel="Base Plate"><label for="d_opt2">Base Plate</label></span>
         <input type="text" class="fill" id="descPart" placeholder="Part No / Model" style="flex:1;min-width:70px;">
       </div>
@@ -785,7 +785,7 @@ function resetSettingsUrl(){
 }
 
 const CATEGORY    = "System";
-const DESCRIPTION = "S23 Welder Upright Post (Weld with Base Plate) Base Plate";
+const DESCRIPTION = "S23 Welded Upright Post (Weld with Base Plate) Base Plate";
 const DESC_PREFIX = "";
 const DIMS = [{"no": "1", "label": "T", "spec": "3.0", "tol": "10%", "min": "2.70", "max": "3.30", "span": false, "rot": false, "labelspan": 1, "nospan": 1, "noskip": false, "specspan": 1, "specskip": false, "mmspan": false}, {"no": "2", "label": "", "spec": "91.0", "tol": "0.5", "min": "90.5", "max": "91.5", "span": false, "rot": false, "labelspan": 1, "nospan": 1, "noskip": false, "specspan": 1, "specskip": false, "mmspan": false}, {"no": "3", "label": "", "spec": "64.0", "tol": "0.5", "min": "63.5", "max": "64.5", "span": false, "rot": false, "labelspan": 1, "nospan": 1, "noskip": false, "specspan": 1, "specskip": false, "mmspan": false}, {"no": "4", "label": "Ø", "spec": "8.5", "tol": "0.5", "min": "8.0", "max": "9.0", "span": false, "rot": false, "labelspan": 1, "nospan": 1, "noskip": false, "specspan": 1, "specskip": false, "mmspan": false}, {"no": "5 a/b", "label": "", "spec": "27.75", "tol": "0.50", "min": "27.25", "max": "28.25", "span": false, "rot": false, "labelspan": 1, "nospan": 1, "noskip": false, "specspan": 1, "specskip": false, "mmspan": false}, {"no": "6", "label": "L", "spec": "", "tol": "1.0", "min": "", "max": "", "span": false, "rot": false, "labelspan": 1, "nospan": 1, "noskip": false, "specspan": 1, "specskip": false, "mmspan": false}, {"no": "7", "label": "", "spec": "9.5", "tol": "0.5", "min": "9.0", "max": "10.0", "span": false, "rot": false, "labelspan": 1, "nospan": 1, "noskip": false, "specspan": 1, "specskip": false, "mmspan": false}, {"no": "8 a/b", "label": "", "spec": "9.0", "tol": "0.5", "min": "8.5", "max": "9.5", "span": false, "rot": false, "labelspan": 1, "nospan": 1, "noskip": false, "specspan": 1, "specskip": false, "mmspan": false}, {"no": "9", "label": "Fitting", "spec": "Left & Right Connector", "tol": "", "min": "", "max": "", "span": true, "rot": true, "labelspan": 1, "nospan": 1, "noskip": false, "specspan": 1, "specskip": false, "mmspan": false}, {"no": "", "label": "", "spec": "", "tol": "", "min": "", "max": "", "span": false, "rot": false, "labelspan": 1, "nospan": 1, "noskip": false, "specspan": 1, "specskip": false, "mmspan": false}, {"no": "", "label": "", "spec": "", "tol": "", "min": "", "max": "", "span": false, "rot": false, "labelspan": 1, "nospan": 1, "noskip": false, "specspan": 1, "specskip": false, "mmspan": false}, {"no": "", "label": "", "spec": "", "tol": "", "min": "", "max": "", "span": false, "rot": false, "labelspan": 1, "nospan": 1, "noskip": false, "specspan": 1, "specskip": false, "mmspan": false}, {"no": "", "label": "", "spec": "", "tol": "", "min": "", "max": "", "span": false, "rot": false, "labelspan": 1, "nospan": 1, "noskip": false, "specspan": 1, "specskip": false, "mmspan": false}, {"no": "", "label": "", "spec": "", "tol": "", "min": "", "max": "", "span": false, "rot": false, "labelspan": 1, "nospan": 1, "noskip": false, "specspan": 1, "specskip": false, "mmspan": false}, {"no": "", "label": "", "spec": "", "tol": "", "min": "", "max": "", "span": false, "rot": false, "labelspan": 1, "nospan": 1, "noskip": false, "specspan": 1, "specskip": false, "mmspan": false}];
 const SAMPLE_ROWS = 8;
@@ -1076,7 +1076,7 @@ async function submitRecord(){
   try{
     const URL_=activeUrl();
     const row=collectRow();
-    const recordId = stamp() + '_' + Math.random().toString(36).slice(2,6);
+    const recordId = (window.qcSameId ? qcSameId(stamp() + '_' + Math.random().toString(36).slice(2,6)) : (stamp() + '_' + Math.random().toString(36).slice(2,6)));
     const stateJson = JSON.stringify(snapshotForm());
 
     /* Phase 1 — GET ?payload={row:...} -> returns rowNum */
@@ -1687,7 +1687,7 @@ autoOpenVerifyFromUrl();
       return true;   /* handled: the form should not show its own "failed" message */
     }
     settle('idle');
-    chip('not sent', 'bad');
+    chip('not confirmed', 'bad');
     return false;
   };
 
@@ -2039,6 +2039,50 @@ autoOpenVerifyFromUrl();
   if(typeof ok === 'function') window.qcSubmitted = function(){ remember('sent'); return ok.apply(this, arguments); };
   var bad = window.qcSubmitFailed;
   if(typeof bad === 'function') window.qcSubmitFailed = function(){ var r = bad.apply(this, arguments); if(r === true) remember('sent'); return r; };
+})();
+</script>
+<script id="qc-same-id">
+/* One send = one row.
+   If Google saved a record but the reply was lost (Wi-Fi drop), the form
+   cannot tell and asks to press Submit again. The record is then sent again
+   with the SAME Record ID as the first try (as long as nothing on the form
+   was changed), so the QC Submissions Inbox recognises it and keeps ONE row.
+   The remembered ID is cleared as soon as a Submit is confirmed. */
+(function(){
+  var KEY = 'qcSameId', KEEP_MS = 24 * 3600 * 1000;
+  function formKey(){ return decodeURIComponent(location.pathname.split('/').pop() || ''); }
+  function fingerprint(){
+    var seen = [], out = [];
+    document.querySelectorAll('#page input, #page select, #page textarea, .content input, .content select, .content textarea')
+      .forEach(function(el){
+        if(seen.indexOf(el) >= 0) return; seen.push(el);
+        if(el.type === 'file' || el.type === 'button' || el.type === 'submit' || el.type === 'hidden') return;
+        if(el.closest && el.closest('.modal, .settings-panel, #settingsPanel, .statusbar, .actionbar')) return;
+        out.push((el.type === 'checkbox' || el.type === 'radio') ? (el.checked ? '1' : '') : String(el.value || '').trim());
+      });
+    var s = out.join('\u0001'), h = 5381;
+    for(var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+    return (h >>> 0).toString(36) + '_' + s.length;
+  }
+  function load(){ try{ return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; }catch(e){ return {}; } }
+  function save(m){ try{ localStorage.setItem(KEY, JSON.stringify(m)); }catch(e){} }
+  var mem = {};                                   /* used when this device cannot store */
+  window.qcSameId = function(fresh){
+    var all = load(), k = formKey(), f = fingerprint(), now = Date.now();
+    var s = all[k] || mem[k];
+    if(s && s.fp === f && now - s.t < KEEP_MS) return s.id;      /* same record, sent again */
+    all[k] = mem[k] = { id: fresh, fp: f, t: now }; save(all);
+    return fresh;
+  };
+  document.addEventListener('DOMContentLoaded', function(){
+    var ok = window.qcSubmitted;
+    if(typeof ok !== 'function') return;
+    window.qcSubmitted = function(){
+      var r = ok.apply(this, arguments);
+      var all = load(); delete all[formKey()]; delete mem[formKey()]; save(all);
+      return r;
+    };
+  });
 })();
 </script>
 </body>
