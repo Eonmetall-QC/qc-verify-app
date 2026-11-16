@@ -1126,26 +1126,20 @@ function sendToServer(url, payload){
           /* Only a real answer from the Inbox (ok + row number) counts as sent.
              An error page, a sign-in page or no answer is NOT a submit. */
           if(!(json && (json.ok === true || json.status === 'ok') && json.rowNum)){ resolve(false); return; }
-          resolve(true);  /* Phase 1 done — show ✅ */
-
-          /* ── Phase 2: screenshot via POST, best-effort in background ── */
+          /* ── Phase 2: record details, then the photo; both checked and retried ── */
           const rowNum = json.rowNum || null;
-          if (payload.screenshot && rowNum) {
-            fetch(url, {
-              method:  'POST',
-              mode:    'no-cors',
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body:    JSON.stringify({
-                screenshot: payload.screenshot,
-                capturedAt: payload.capturedAt,
-                dateStr:    (payload.row || {})['Date'] || '',
-                rowNum:     rowNum,
-                recordId:   payload.recordId || '',
-                formName:   payload.formName || '',
-                /* the state JSON is what lets the hub reload this record for signing */
-                state:      payload.state ? JSON.stringify(payload.state) : ''
-              })
-            }).catch(function(){});
+          if (rowNum && (payload.screenshot || payload.state)) {
+            qcSendPhase2(url, {
+              capturedAt: payload.capturedAt,
+              dateStr:    (payload.row || {})['Date'] || '',
+              rowNum:     rowNum,
+              recordId:   payload.recordId || '',
+              formName:   payload.formName || '',
+              /* the state JSON is what lets the hub reload this record for signing */
+              state:      payload.state ? JSON.stringify(payload.state) : ''
+            }, payload.screenshot).then(function(){ resolve(true); });
+          } else {
+            resolve(true);
           }
         })
         .catch(function(){
@@ -1208,7 +1202,7 @@ function submitRecord(){
   // 3) Screenshot + auto-sync to Google Sheet / Drive (if configured)
   _submitting = true;   /* block flushQueue while this submit is running */
   captureScreenshot().then(dataUrl=>{
-    const now = new Date(); const pad = n => String(n).padStart(2,'0'); const capturedAt = String(now.getFullYear()) + pad(now.getMonth()+1) + pad(now.getDate()) + '_' + pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds()); const recordId = capturedAt + '_' + Math.random().toString(36).slice(2,8);
+    const now = new Date(); const pad = n => String(n).padStart(2,'0'); const capturedAt = String(now.getFullYear()) + pad(now.getMonth()+1) + pad(now.getDate()) + '_' + pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds()); const recordId = (window.qcSameId ? qcSameId(capturedAt + '_' + Math.random().toString(36).slice(2,8)) : (capturedAt + '_' + Math.random().toString(36).slice(2,8)));
     const payload = { row: row, screenshot: dataUrl, formName: FORM_NAME, capturedAt: capturedAt, recordId: recordId, state: state, _ts: Date.now() };
     const s = loadSettings();
     if(!s.scriptUrl){
@@ -1221,11 +1215,11 @@ function submitRecord(){
       _submitting = false;
       if(ok){
         qcSubmitted();
-        alert('✅ Submitted to Google Sheet.');
+        alert(window.__qcPhotoFailed ? QC_PHOTO_WARN : '✅ Submitted to Google Sheet.');
       } else {
         /* not confirmed by the Inbox: say so plainly, keep the entries, allow Submit again */
         qcSubmitFailed();
-        alert('\u274c NOT SENT \u2014 Google Sheet did not confirm this record, so it is NOT in the QC Submissions Inbox.\n\nYour entries are still on the screen. Check the Wi-Fi and press Submit again.\nIf it keeps failing, tell the supervisor.');
+        alert('\u274c NOT CONFIRMED \u2014 Google Sheet did not answer, so this record may not be in the QC Submissions Inbox.\n\nYour entries are still on the screen. Check the Wi-Fi and press Submit again WITHOUT changing anything.\n(If the first try did arrive, it will NOT be added twice.)\nIf it keeps failing, tell the supervisor.');
       }
     });
   }).catch(err=>{
@@ -1810,7 +1804,7 @@ autoOpenVerifyFromUrl();
       return true;   /* handled: the form should not show its own "failed" message */
     }
     settle('idle');
-    chip('not sent', 'bad');
+    chip('not confirmed', 'bad');
     return false;
   };
 
@@ -2116,6 +2110,94 @@ autoOpenVerifyFromUrl();
   if(typeof ok === 'function') window.qcSubmitted = function(){ remember('sent'); return ok.apply(this, arguments); };
   var bad = window.qcSubmitFailed;
   if(typeof bad === 'function') window.qcSubmitFailed = function(){ var r = bad.apply(this, arguments); if(r === true) remember('sent'); return r; };
+})();
+</script>
+<script id="qc-same-id">
+/* One send = one row.
+   If Google saved a record but the reply was lost (Wi-Fi drop), the form
+   cannot tell and asks to press Submit again. The record is then sent again
+   with the SAME Record ID as the first try (as long as nothing on the form
+   was changed), so the QC Submissions Inbox recognises it and keeps ONE row.
+   The remembered ID is cleared as soon as a Submit is confirmed. */
+(function(){
+  var KEY = 'qcSameId', KEEP_MS = 24 * 3600 * 1000;
+  function formKey(){ return decodeURIComponent(location.pathname.split('/').pop() || ''); }
+  function fingerprint(){
+    var seen = [], out = [];
+    document.querySelectorAll('#page input, #page select, #page textarea, .content input, .content select, .content textarea')
+      .forEach(function(el){
+        if(seen.indexOf(el) >= 0) return; seen.push(el);
+        if(el.type === 'file' || el.type === 'button' || el.type === 'submit' || el.type === 'hidden') return;
+        if(el.closest && el.closest('.modal, .settings-panel, #settingsPanel, .statusbar, .actionbar')) return;
+        out.push((el.type === 'checkbox' || el.type === 'radio') ? (el.checked ? '1' : '') : String(el.value || '').trim());
+      });
+    var s = out.join('\u0001'), h = 5381;
+    for(var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+    return (h >>> 0).toString(36) + '_' + s.length;
+  }
+  function load(){ try{ return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; }catch(e){ return {}; } }
+  function save(m){ try{ localStorage.setItem(KEY, JSON.stringify(m)); }catch(e){} }
+  var mem = {};                                   /* used when this device cannot store */
+  window.qcSameId = function(fresh){
+    var all = load(), k = formKey(), f = fingerprint(), now = Date.now();
+    var s = all[k] || mem[k];
+    if(s && s.fp === f && now - s.t < KEEP_MS) return s.id;      /* same record, sent again */
+    all[k] = mem[k] = { id: fresh, fp: f, t: now }; save(all);
+    return fresh;
+  };
+  document.addEventListener('DOMContentLoaded', function(){
+    var ok = window.qcSubmitted;
+    if(typeof ok !== 'function') return;
+    window.qcSubmitted = function(){
+      var r = ok.apply(this, arguments);
+      var all = load(); delete all[formKey()]; delete mem[formKey()]; save(all);
+      return r;
+    };
+  });
+})();
+</script>
+<script id="qc-photo-upload">
+/* Photo upload that is CHECKED.
+   After the row is saved, the record details (small) are sent first, so the
+   record always reaches the Verify Hub; then the photo. Each step waits for
+   Google's answer and is retried up to 3 times. "Submitted" is only shown
+   once the photo is confirmed; otherwise the inspector is told plainly. */
+(function(){
+  window.QC_PHOTO_WARN = '⚠️ Saved in the QC Submissions Inbox, but the form PHOTO could not be uploaded (Wi-Fi?).\n\n' +
+    'Do NOT submit again. Tell the supervisor: the record can still be verified, and the signed photo is saved then.';
+  function postOnce(url, body){
+    var ctrl = window.AbortController ? new AbortController() : null;
+    var t = ctrl ? setTimeout(function(){ ctrl.abort(); }, 45000) : null;
+    return fetch(url, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, redirect:'follow',
+                        body: JSON.stringify(body), signal: ctrl ? ctrl.signal : undefined })
+      .then(function(r){ return r.text(); })
+      .then(function(txt){ var j = null; try{ j = JSON.parse(txt); }catch(e){} return !!(j && j.ok === true); })
+      .catch(function(){ return false; })
+      .then(function(ok){ if(t) clearTimeout(t); return ok; });
+  }
+  function postRetry(url, body, tries){
+    var waits = [0, 2000, 5000, 10000], n = 0;
+    return new Promise(function(done){
+      (function go(){
+        setTimeout(function(){
+          postOnce(url, body).then(function(ok){ if(ok || ++n >= tries) done(ok); else go(); });
+        }, waits[n] || 5000);
+      })();
+    });
+  }
+  /* base = {rowNum, recordId, formName, state, dateStr, capturedAt} */
+  window.qcSendPhase2 = function(url, base, screenshot){
+    var details = {}; for(var k in base) details[k] = base[k];
+    return postRetry(url, details, 3).then(function(stateOk){
+      if(!screenshot) return { stateOk: stateOk, photoOk: stateOk };
+      var withPhoto = {}; for(var k2 in base) withPhoto[k2] = base[k2];
+      withPhoto.screenshot = screenshot;
+      return postRetry(url, withPhoto, 3).then(function(photoOk){
+        window.__qcPhotoFailed = !photoOk;
+        return { stateOk: stateOk || photoOk, photoOk: photoOk };
+      });
+    });
+  };
 })();
 </script>
 </body>
