@@ -1698,5 +1698,25 @@ autoOpenVerifyFromUrl();
   if(typeof bad === 'function') window.qcSubmitFailed = function(){ var r = bad.apply(this, arguments); if(r === true) remember('sent'); return r; };
 })();
 </script>
+<script>
+/* Fit-to-screen for this wide (1180px) landscape form. Forces a correct
+   shrink-to-fit even when opened in a background tab. Only affects display
+   scale — not the form data, signature, or submission. */
+(function(){
+  var VW=1180, m=document.querySelector('meta[name="viewport"]');
+  function fit(){
+    if(!m) return;
+    var w = document.documentElement.clientWidth || window.innerWidth;
+    if(!w) return;
+    m.setAttribute('content','width='+VW+', initial-scale='+(w/VW).toFixed(4)+
+      ', minimum-scale=0.25, maximum-scale=6.0, user-scalable=yes');
+  }
+  window.addEventListener('load', fit);
+  window.addEventListener('resize', fit);
+  window.addEventListener('orientationchange', fit);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) setTimeout(fit,50); });
+  setTimeout(fit,0);
+})();
+</script>
 </body>
 </html>
