@@ -1103,27 +1103,18 @@ async function submitRecord(){
     const shot = canvas.toDataURL('image/jpeg', 0.85);
 
     setSync('uploading image…');
-    /* text/plain keeps this a simple request (no CORS preflight);
-       Apps Script still reads the body from e.postData.contents */
-    const r2 = await fetch(URL_, {
-      method:'POST',
-      headers: {'Content-Type':'text/plain;charset=utf-8'},
-      redirect:'follow',
-      body: JSON.stringify({
-        screenshot: shot,
-        rowNum:     rowNum,
-        dateStr:    row['Date'],
-        capturedAt: stamp(),
-        recordId:   recordId,
-        formName:   FORM_NAME,
-        state:      stateJson
-      })
-    });
-    let res2={};
-    try{ res2 = JSON.parse(await r2.text()); }catch(e){}
+    /* record details first, then the photo; both checked and retried */
+    await qcSendPhase2(URL_, {
+      rowNum:     rowNum,
+      dateStr:    row['Date'],
+      capturedAt: stamp(),
+      recordId:   recordId,
+      formName:   FORM_NAME,
+      state:      stateJson
+    }, shot);
 
     qcSubmitted();
-    alert('\u2705 Submitted to Google Sheet.');
+    alert(window.__qcPhotoFailed ? QC_PHOTO_WARN : '\u2705 Submitted to Google Sheet.');
   }catch(err){
     if(!qcSubmitFailed(err)) alert('Submit failed:\n' + err.message);
   }finally{
@@ -2083,6 +2074,50 @@ autoOpenVerifyFromUrl();
       return r;
     };
   });
+})();
+</script>
+<script id="qc-photo-upload">
+/* Photo upload that is CHECKED.
+   After the row is saved, the record details (small) are sent first, so the
+   record always reaches the Verify Hub; then the photo. Each step waits for
+   Google's answer and is retried up to 3 times. "Submitted" is only shown
+   once the photo is confirmed; otherwise the inspector is told plainly. */
+(function(){
+  window.QC_PHOTO_WARN = '⚠️ Saved in the QC Submissions Inbox, but the form PHOTO could not be uploaded (Wi-Fi?).\n\n' +
+    'Do NOT submit again. Tell the supervisor: the record can still be verified, and the signed photo is saved then.';
+  function postOnce(url, body){
+    var ctrl = window.AbortController ? new AbortController() : null;
+    var t = ctrl ? setTimeout(function(){ ctrl.abort(); }, 45000) : null;
+    return fetch(url, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, redirect:'follow',
+                        body: JSON.stringify(body), signal: ctrl ? ctrl.signal : undefined })
+      .then(function(r){ return r.text(); })
+      .then(function(txt){ var j = null; try{ j = JSON.parse(txt); }catch(e){} return !!(j && j.ok === true); })
+      .catch(function(){ return false; })
+      .then(function(ok){ if(t) clearTimeout(t); return ok; });
+  }
+  function postRetry(url, body, tries){
+    var waits = [0, 2000, 5000, 10000], n = 0;
+    return new Promise(function(done){
+      (function go(){
+        setTimeout(function(){
+          postOnce(url, body).then(function(ok){ if(ok || ++n >= tries) done(ok); else go(); });
+        }, waits[n] || 5000);
+      })();
+    });
+  }
+  /* base = {rowNum, recordId, formName, state, dateStr, capturedAt} */
+  window.qcSendPhase2 = function(url, base, screenshot){
+    var details = {}; for(var k in base) details[k] = base[k];
+    return postRetry(url, details, 3).then(function(stateOk){
+      if(!screenshot) return { stateOk: stateOk, photoOk: stateOk };
+      var withPhoto = {}; for(var k2 in base) withPhoto[k2] = base[k2];
+      withPhoto.screenshot = screenshot;
+      return postRetry(url, withPhoto, 3).then(function(photoOk){
+        window.__qcPhotoFailed = !photoOk;
+        return { stateOk: stateOk || photoOk, photoOk: photoOk };
+      });
+    });
+  };
 })();
 </script>
 </body>
