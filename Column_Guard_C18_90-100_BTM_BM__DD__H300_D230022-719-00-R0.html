@@ -713,12 +713,26 @@ window.QC_LISTS_DEFAULT = {
 /* Opened from the QC Verify app on a tablet or phone: after Verify & Save, or
    Exit, go back to the list instead of reloading this record. On the laptop
    (file share) nothing changes. */
+/* After "Verify & Save" or "Exit": on a tablet or phone go back to the Verify Hub
+   list - in the installed app AND in a normal Chrome tab. On the laptop (file
+   share) keep the old behaviour: stay on the form. */
 window.qcInApp = function(){
-  return location.protocol === 'https:' &&
-    ((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true);
+  var mm = function(q){ return !!(window.matchMedia && matchMedia(q).matches); };
+  var app = location.protocol === 'https:' &&
+    (mm('(display-mode: standalone)') || mm('(display-mode: fullscreen)') || mm('(display-mode: minimal-ui)') || navigator.standalone === true);
+  var mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '') ||
+    !!(navigator.userAgentData && navigator.userAgentData.mobile);
+  return app || mobile;
 };
 window.qcBackToList = function(){
-  if(history.length > 1) history.back(); else location.replace('QC_Verify_Hub.html');
+  /* the hub opened this form in a NEW tab: close it, the hub tab underneath refreshes itself */
+  try{ if(window.opener && !window.opener.closed) window.close(); }catch(e){}
+  setTimeout(function(){                 /* still here: go back, or open the hub */
+    var ref = document.referrer || '';
+    if(history.length > 1 && /QC_Verify_Hub/i.test(ref)){ history.back(); return; }
+    if(history.length > 1 && !ref){ history.back(); return; }
+    location.replace(/QC_Verify_Hub/i.test(ref) ? ref.split('#')[0] : 'QC_Verify_Hub.html');
+  }, 400);
 };
 </script>
 <script>
