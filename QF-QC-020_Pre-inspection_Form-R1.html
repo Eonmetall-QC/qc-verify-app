@@ -325,12 +325,26 @@ window.QC_LISTS_DEFAULT = {
 /* Opened from the QC Verify app on a tablet or phone: after Verify & Save, or
    Exit, go back to the list instead of reloading this record. On the laptop
    (file share) nothing changes. */
+/* After "Verify & Save" or "Exit": on a tablet or phone go back to the Verify Hub
+   list - in the installed app AND in a normal Chrome tab. On the laptop (file
+   share) keep the old behaviour: stay on the form. */
 window.qcInApp = function(){
-  return location.protocol === 'https:' &&
-    ((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true);
+  var mm = function(q){ return !!(window.matchMedia && matchMedia(q).matches); };
+  var app = location.protocol === 'https:' &&
+    (mm('(display-mode: standalone)') || mm('(display-mode: fullscreen)') || mm('(display-mode: minimal-ui)') || navigator.standalone === true);
+  var mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '') ||
+    !!(navigator.userAgentData && navigator.userAgentData.mobile);
+  return app || mobile;
 };
 window.qcBackToList = function(){
-  if(history.length > 1) history.back(); else location.replace('QC_Verify_Hub.html');
+  /* the hub opened this form in a NEW tab: close it, the hub tab underneath refreshes itself */
+  try{ if(window.opener && !window.opener.closed) window.close(); }catch(e){}
+  setTimeout(function(){                 /* still here: go back, or open the hub */
+    var ref = document.referrer || '';
+    if(history.length > 1 && /QC_Verify_Hub/i.test(ref)){ history.back(); return; }
+    if(history.length > 1 && !ref){ history.back(); return; }
+    location.replace(/QC_Verify_Hub/i.test(ref) ? ref.split('#')[0] : 'QC_Verify_Hub.html');
+  }, 400);
 };
 </script>
 <script>
@@ -485,6 +499,7 @@ function sendToServer(url, payload){
       /* ── Phase 1: row data via GET ── */
       const rowPayload = { row: payload.row, capturedAt: payload.capturedAt,
                            recordId: payload.recordId || '', formName: payload.formName || '' };
+      if (payload.line) rowPayload.line = payload.line;   /* Pre-inspection line number */
       const encoded    = encodeURIComponent(JSON.stringify(rowPayload));
       const getUrl     = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'payload=' + encoded;
 
@@ -806,7 +821,8 @@ async function submitRecord(){
     btn.textContent = 'SENDING ' + (i+1) + '/' + rows.length + '\u2026';
     /* The page photo is saved ONCE per submission (with the first row). The other
        rows share its Record ID; at Verify every row gets the signed photo's link. */
-    const payload = { row: buildRecordRow(rows[i]), screenshot: (i === 0 ? shot : ''),
+    const payload = { row: buildRecordRow(rows[i]), line: i + 1,   /* line number: two lines of one sheet are never taken for one */
+                      screenshot: (i === 0 ? shot : ''),
                       formName: FORM_NAME, capturedAt: capturedAt,
                       recordId: recordId, state: (i === 0 ? stateJson : ''),
                       _ts: Date.now() };
@@ -824,11 +840,15 @@ async function submitRecord(){
     qcSubmitFailed();
     alert('\u274c NOT CONFIRMED \u2014 Google Sheet did not answer, so this record may not be in the QC Submissions Inbox.\n\nYour entries are still on the screen. Check the Wi-Fi and press Submit again WITHOUT changing anything.\n(If the first try did arrive, it will NOT be added twice.)\nIf it keeps failing, tell the supervisor.');
   } else {
-    /* some rows are already in the sheet: never send them twice */
-    qcSubmitted();
-    var c = document.getElementById('chipSync'); if(c){ c.textContent = 'Sync: only ' + sent + ' of ' + rows.length + ' rows sent'; c.classList.remove('ok'); c.classList.add('bad'); }
-    alert('\u26a0\ufe0f Only ' + sent + ' of ' + rows.length + ' rows reached Google Sheet (rows 1\u2013' + sent + ').\n'
-        + 'Row ' + failedAt + ' onward were NOT sent.\n\nDo NOT press Submit again (rows 1\u2013' + sent + ' would be sent twice). Tell the supervisor.');
+    /* Some lines are confirmed, the rest are not. Every line carries its line
+       number and the same Record ID, so sending the sheet again is safe: the
+       QC Submissions Inbox keeps the lines it already has and adds only the
+       missing ones. */
+    qcSubmitFailed();
+    var c = document.getElementById('chipSync'); if(c){ c.textContent = 'Sync: only ' + sent + ' of ' + rows.length + ' lines confirmed'; c.classList.remove('ok'); c.classList.add('bad'); }
+    alert('\u274c NOT CONFIRMED \u2014 only ' + sent + ' of ' + rows.length + ' lines were confirmed by Google Sheet.\n\n'
+        + 'Your entries are still on the screen. Check the Wi-Fi and press Submit again WITHOUT changing anything.\n'
+        + '(Lines that already arrived will NOT be added twice.)\nIf it keeps failing, tell the supervisor.');
   }
 }
 
